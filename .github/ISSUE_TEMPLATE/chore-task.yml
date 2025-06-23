@@ -1,0 +1,21 @@
+name: 🧹 기타 작업 (Chore)
+description: 기능은 아니지만 필요한 설정 변경, 유지보수 등
+title: "chore: [작업 제목]"
+labels: [ "chore" ]
+body:
+  - type: textarea
+    id: chore-task
+    attributes:
+      label: 작업 내용
+      placeholder: |
+        - 환경 설정 파일 수정
+        - Gradle 설정 변경
+        - CI/CD 구성 변경
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 작업 이유
+      placeholder: 왜 이 작업이 필요한가요?
