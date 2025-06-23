@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.admin;
+package com.yeo_li.yeol_post.tag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,17 +11,12 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class admin {
+public class Tag {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  private int id;
 
   @Column(nullable = false)
-  private String kakaoId;
-
-  private String introduction;
-
-  @Column(nullable = false, columnDefinition = "boolean default false")
-  private boolean isDeleted;
+  private String tagName;
 }
