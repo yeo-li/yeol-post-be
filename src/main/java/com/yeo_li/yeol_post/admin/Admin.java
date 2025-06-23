@@ -1,10 +1,15 @@
 package com.yeo_li.yeol_post.admin;
 
+import com.yeo_li.yeol_post.post.Post;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,4 +29,7 @@ public class Admin {
 
   @Column(nullable = false, columnDefinition = "boolean default false")
   private boolean isDeleted;
+
+  @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Post> posts = new ArrayList<>();
 }
