@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.admin.Admin;
+import com.yeo_li.yeol_post.category.Category;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -46,7 +47,7 @@ public class Post {
   @JoinColumn(name = "admin_id")
   private Admin admin;
 
-//  @ManyToOne(fetch = FetchType.LAZY)
-//  @JoinColumn(name = "category_id")
-//  private Category category;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "category_id")
+  private Category category;
 }
