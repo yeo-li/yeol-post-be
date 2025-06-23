@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AdminService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+public class AdminOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
   private final AdminRepository adminRepository;
 
@@ -23,12 +23,14 @@ public class AdminService implements OAuth2UserService<OAuth2UserRequest, OAuth2
 
     // 카카오 정보 꺼내기
     Map<String, Object> attributes = oauth2User.getAttributes();
-    String kakaoId = (String) attributes.get("id");
+    String kakaoId = attributes.get("id").toString();
 
     // 우리 DB에 등록된 사용자 찾기
     Optional<Admin> admin = adminRepository.findByKakaoId(kakaoId);
 
     if (admin.isEmpty()) {
+
+      System.out.printf("가입된 관리자가 아닙니다.(%s)\n", kakaoId);
       throw new OAuth2AuthenticationException("가입된 관리자가 아닙니다.");
     }
 
