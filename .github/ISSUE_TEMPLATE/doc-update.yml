@@ -1,0 +1,26 @@
+name: 📝 문서 수정/추가
+description: README, API 문서, 주석 등을 수정하거나 추가할 때 사용
+title: "docs: [문서 제목]"
+labels: [ "documentation", "docs" ]
+body:
+  - type: input
+    id: doc-target
+    attributes:
+      label: 수정할 문서 위치
+      placeholder: 예) README.md, /docs/api.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: change-details
+    attributes:
+      label: 수정/추가 내용
+      placeholder: 어떤 내용을 수정/추가할 예정인지 설명해주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 문서 수정 이유
+      placeholder: 왜 이 문서가 수정되어야 하나요?
