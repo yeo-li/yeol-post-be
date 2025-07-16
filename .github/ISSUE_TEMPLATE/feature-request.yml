@@ -1,26 +1,22 @@
+---
 name: ✨ 기능 추가 요청 (Feature)
-description: 새로운 기능을 개발할 때 사용하는 템플릿
+about: 새로운 기능을 개발할 때 사용하는 템플릿
 title: "feat: [기능 이름]"
 labels: [ "feature", "feat" ]
-body:
-  - type: input
-    id: feature-name
-    attributes:
-      label: 기능 이름
-      placeholder: 예) 게시글 작성, 로그인 API
-    validations:
-      required: true
+---
 
-  - type: textarea
-    id: description
-    attributes:
-      label: 기능 설명
-      placeholder: 어떤 기능이며, 어떤 동작을 하는지 설명해주세요
-    validations:
-      required: true
+## 📌 기능 이름
 
-  - type: textarea
-    id: implementation
-    attributes:
-      label: 구현 방식
-      placeholder: 예상되는 API, Entity, UI 요소 등
+예) 게시글 작성, 로그인 API
+
+---
+
+## 🧾 기능 설명
+
+어떤 기능이며, 어떤 동작을 하는지 설명해주세요.
+
+---
+
+## 🛠️ 구현 방식
+
+예상되는 API, Entity, UI 요소 등을 자유롭게 작성해주세요.
