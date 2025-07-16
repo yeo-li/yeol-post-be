@@ -4,7 +4,7 @@ import com.yeo_li.yeol_post.admin.Admin;
 import com.yeo_li.yeol_post.admin.AdminRepository;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryRepository;
-import com.yeo_li.yeol_post.post.dto.PostCreateCommand;
+import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.tag.TagRepository;
 import java.time.LocalDateTime;

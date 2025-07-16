@@ -13,7 +13,9 @@ public record PostCreateRequest(
     @NotBlank
     String content,
     @NotNull
-    @JsonProperty("admin_id") String adminId,
+    @JsonProperty("admin_id") Long adminId,
+    @JsonProperty("category_id")
+    Long categoryId,
     List<String> tags) {
 
 }
