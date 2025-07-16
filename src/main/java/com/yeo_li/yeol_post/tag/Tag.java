@@ -26,4 +26,11 @@ public class Tag {
 
   @OneToMany(mappedBy = "tag")
   private List<PostTag> postTags = new ArrayList<>();
+
+  public Tag(String tagName) {
+    this.tagName = tagName;
+  }
+
+  public Tag() {
+  }
 }
