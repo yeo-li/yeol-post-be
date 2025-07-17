@@ -21,8 +21,8 @@ public class PostCommandFactory {
 
   public PostCreateCommand createPostCommand(PostCreateRequest request) {
     LocalDateTime updatedAt = LocalDateTime.now();
-    Boolean isPublished = false;
-    LocalDateTime publishedAt = null;
+    Boolean isPublished = true;
+    LocalDateTime publishedAt = LocalDateTime.now();
 
     Admin admin = adminRepository.findById(request.adminId())
         .orElseThrow(() -> new IllegalArgumentException(
@@ -41,7 +41,7 @@ public class PostCommandFactory {
         request.content(),
         updatedAt,
         isPublished,
-        null,
+        publishedAt,
         admin,
         category,
         request.tags(),

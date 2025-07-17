@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.post_tag;
 
 import com.yeo_li.yeol_post.post.Post;
 import com.yeo_li.yeol_post.tag.Tag;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,5 +18,15 @@ public class PostTagService {
     for (Tag tag : tags) {
       postTagRepository.save(new PostTag(post, tag));
     }
+  }
+
+  public List<Tag> findTagByPostId(int postId) {
+    List<PostTag> postTags = postTagRepository.findPostTagsByPost_Id(postId);
+    List<Tag> tags = new ArrayList<>();
+    for (PostTag postTag : postTags) {
+      tags.add(postTag.getTag());
+    }
+
+    return tags;
   }
 }
