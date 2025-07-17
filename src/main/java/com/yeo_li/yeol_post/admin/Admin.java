@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -26,6 +27,9 @@ public class Admin {
   private String kakaoId;
 
   private String introduction;
+
+  @NotNull
+  private String name;
 
   @Column(nullable = false, columnDefinition = "boolean default false")
   private boolean isDeleted;

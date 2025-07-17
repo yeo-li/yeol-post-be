@@ -13,8 +13,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,19 +34,21 @@ public class Post {
   @Column(nullable = false)
   private String content;
 
+  private String summary;
+
   @Column(nullable = false)
   private String author;
 
   @Column(nullable = false)
-  private Date updatedAt;
+  private LocalDateTime updatedAt;
 
-  private Date publishedAt;
-
-  @Column(nullable = false, columnDefinition = "boolean default false")
-  private boolean isPublished;
+  private LocalDateTime publishedAt;
 
   @Column(nullable = false, columnDefinition = "boolean default false")
-  private boolean isDeleted;
+  private Boolean isPublished;
+
+  @Column(nullable = false, columnDefinition = "boolean default false")
+  private Boolean isDeleted;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "admin_id")

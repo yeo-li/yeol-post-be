@@ -29,4 +29,13 @@ public class PostTag {
   @ManyToOne
   @JoinColumn(name = "tag_id", nullable = false)
   private Tag tag;
+
+  public PostTag(Post post, Tag tag) {
+    this.post = post;
+    this.tag = tag;
+  }
+
+  public PostTag() {
+
+  }
 }
