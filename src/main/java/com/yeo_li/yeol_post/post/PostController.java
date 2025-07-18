@@ -53,6 +53,8 @@ public class PostController {
       postResponses = postService.getPostByTag(params.get("tag"));
     } else if (params.containsKey("category")) {
       postResponses = postService.getPostByCategory(params.get("category"));
+    } else if (params.containsKey("author")) {
+      postResponses = postService.getPostByAuthor(params.get("author"));
     }
 
     return ResponseEntity
