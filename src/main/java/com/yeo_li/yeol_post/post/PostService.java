@@ -1,5 +1,7 @@
 package com.yeo_li.yeol_post.post;
 
+import com.yeo_li.yeol_post.category.Category;
+import com.yeo_li.yeol_post.category.CategoryService;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post_tag.PostTagService;
@@ -18,6 +20,7 @@ public class PostService {
 
   private final TagService tagService;
   private final PostTagService postTagService;
+  private final CategoryService categoryService;
 
   public int createPost(PostCreateCommand command) {
     List<Tag> tags = tagService.findOrCreateAll(command.tags());
@@ -47,6 +50,16 @@ public class PostService {
     }
     Tag tag = tagService.findTagByTagName(tagName);
     List<Post> posts = postTagService.findPostByTagId(tag.getId());
+    return convertPostResponse(posts);
+  }
+
+  public List<PostResponse> getPostByCategory(String categoryName) {
+    if (categoryName.isBlank()) {
+      return null;
+    }
+
+    Category category = categoryService.findCategoryByCategoryName(categoryName);
+    List<Post> posts = postRepository.findPostsByCategory(category);
     return convertPostResponse(posts);
   }
 
