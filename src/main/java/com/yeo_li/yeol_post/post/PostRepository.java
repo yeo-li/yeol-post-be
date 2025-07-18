@@ -14,4 +14,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
   List<Post> searchPostByTitle(@Param("keyword") String keyword);
 
   List<Post> findPostsByCategory(Category category);
+
+  @Query("SELECT p FROM Post p where LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
+  List<Post> findPostsByAuthor(@Param("keyword") String keyword);
 }

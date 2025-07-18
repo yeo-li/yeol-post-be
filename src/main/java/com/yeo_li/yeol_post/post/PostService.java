@@ -63,6 +63,15 @@ public class PostService {
     return convertPostResponse(posts);
   }
 
+  public List<PostResponse> getPostByAuthor(String author) {
+    if (author == null) {
+      return null;
+    }
+
+    List<Post> posts = postRepository.findPostsByAuthor(author);
+    return convertPostResponse(posts);
+  }
+
   public List<PostResponse> convertPostResponse(List<Post> posts) {
     List<PostResponse> postResponses = new ArrayList<>();
     for (Post post : posts) {
