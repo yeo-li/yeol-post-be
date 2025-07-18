@@ -5,6 +5,7 @@ import com.yeo_li.yeol_post.common.dto.CommonResponse;
 import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -44,12 +45,17 @@ public class PostController {
   }
 
   @GetMapping
-  public ResponseEntity<?> getPostsByTitle(@RequestParam String title) {
-
-    List<PostResponse> postResponses = postService.getPostByTitle(title);
+  public ResponseEntity<?> getPostsByQueryString(@RequestParam Map<String, String> params) {
+    List<PostResponse> postResponses = new ArrayList<>();
+    if (params.containsKey("title")) {
+      postResponses = postService.getPostByTitle(params.get("title"));
+    } else if (params.containsKey("tag")) {
+      postResponses = postService.getPostByTag(params.get("tag"));
+    }
 
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(CommonResponse.success(postResponses));
   }
+
 }
