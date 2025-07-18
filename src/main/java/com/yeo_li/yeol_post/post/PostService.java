@@ -41,6 +41,15 @@ public class PostService {
     return convertPostResponse(posts);
   }
 
+  public List<PostResponse> getPostByTag(String tagName) {
+    if (tagName.isBlank()) {
+      return null;
+    }
+    Tag tag = tagService.findTagByTagName(tagName);
+    List<Post> posts = postTagService.findPostByTagId(tag.getId());
+    return convertPostResponse(posts);
+  }
+
   public List<PostResponse> convertPostResponse(List<Post> posts) {
     List<PostResponse> postResponses = new ArrayList<>();
     for (Post post : posts) {
