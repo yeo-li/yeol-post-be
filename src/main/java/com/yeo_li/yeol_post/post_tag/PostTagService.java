@@ -29,4 +29,14 @@ public class PostTagService {
 
     return tags;
   }
+
+  public List<Post> findPostByTagId(int tagId) {
+    List<PostTag> postTags = postTagRepository.findPostTagsByTag_Id(tagId);
+    List<Post> posts = new ArrayList<>();
+    for (PostTag postTag : postTags) {
+      posts.add(postTag.getPost());
+    }
+
+    return posts;
+  }
 }
