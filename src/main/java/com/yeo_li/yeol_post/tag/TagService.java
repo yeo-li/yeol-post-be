@@ -29,4 +29,8 @@ public class TagService {
         .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
   }
 
+  public Tag findTagById(int tagId) {
+    return tagRepository.findTagById(tagId);
+  }
+
 }

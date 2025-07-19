@@ -39,4 +39,12 @@ public class PostTagService {
 
     return posts;
   }
+
+  public List<PostTag> findPostTagByPostId(int postId) {
+    return postTagRepository.findPostTagsByPost_Id(postId);
+  }
+
+  public void deletePostTag(int postTagId) {
+    postTagRepository.deletePostTagById(postTagId);
+  }
 }
