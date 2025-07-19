@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.admin;
 
+import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.post.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -17,7 +18,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Admin {
+public class Admin extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
