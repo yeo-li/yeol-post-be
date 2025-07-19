@@ -2,11 +2,16 @@ package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryService;
+import com.yeo_li.yeol_post.common.exception.BusinessException;
+import com.yeo_li.yeol_post.common.exception.ErrorCode;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
+import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.post_tag.PostTag;
 import com.yeo_li.yeol_post.post_tag.PostTagService;
 import com.yeo_li.yeol_post.tag.Tag;
 import com.yeo_li.yeol_post.tag.TagService;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -98,6 +103,43 @@ public class PostService {
 
   public void deletePostByPostId(int postId) {
     postRepository.deleteById(postId);
+  }
+
+  @Transactional
+  public void updatePost(PostUpdateRequest request) {
+    Post post = postRepository.findById(request.postId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
+
+    if (request.title() != null) {
+      post.setTitle(request.title());
+    }
+    if (request.summary() != null) {
+      post.setSummary(request.summary());
+    }
+    if (request.content() != null) {
+      post.setContent(request.content());
+    }
+    if (request.author() != null) {
+      post.setAuthor(request.author());
+    }
+    if (request.categoryId() != null) {
+      Category category = categoryService.findCategoryByCategoryId(request.categoryId());
+      post.setCategory(category);
+    }
+    if (request.tagIds() != null) {
+      List<Tag> tags = new ArrayList<>();
+      for (int tagId : request.tagIds()) {
+        tags.add(tagService.findTagById(tagId));
+      }
+
+      List<PostTag> postTags = postTagService.findPostTagByPostId(request.postId());
+      for (PostTag postTag : postTags) {
+        postTagService.deletePostTag(postTag.getId());
+      }
+
+      postTagService.createPostTag(post, tags);
+    }
+
   }
 
 }
