@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.admin.Admin;
 import com.yeo_li.yeol_post.category.Category;
+import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.post_tag.PostTag;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -22,7 +23,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Post {
+public class Post extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

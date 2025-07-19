@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.post_tag;
 
+import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.post.Post;
 import com.yeo_li.yeol_post.tag.Tag;
 import jakarta.persistence.Entity;
@@ -16,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(name = "post_tag")
-public class PostTag {
+public class PostTag extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
