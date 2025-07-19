@@ -15,8 +15,6 @@ public record PostCreateCommand(
     String author, // 있음
     String content, // 있음
     @NotNull
-    LocalDateTime updatedAt, // Fact -
-    @NotNull
     Boolean isPublished, // Fact -
     LocalDateTime publishedAt, // Fact -
     @NotNull
@@ -36,7 +34,6 @@ public record PostCreateCommand(
     post.setSummary(this.summary);
     post.setAuthor(this.author);
     post.setContent(this.content);
-    post.setUpdatedAt(this.updatedAt);
     post.setPublishedAt(this.publishedAt);
     post.setIsPublished(this.isPublished);
     post.setIsDeleted(this.isDeleted);

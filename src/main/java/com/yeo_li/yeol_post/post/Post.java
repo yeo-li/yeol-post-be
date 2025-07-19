@@ -40,9 +40,6 @@ public class Post extends BaseTimeEntity {
   @Column(nullable = false)
   private String author;
 
-  @Column(nullable = false)
-  private LocalDateTime updatedAt;
-
   private LocalDateTime publishedAt;
 
   @Column(nullable = false, columnDefinition = "boolean default false")

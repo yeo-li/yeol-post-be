@@ -39,7 +39,6 @@ public class PostCommandFactory {
         request.summary(),
         request.author(),
         request.content(),
-        updatedAt,
         isPublished,
         publishedAt,
         admin,
