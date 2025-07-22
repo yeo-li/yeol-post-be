@@ -1,5 +1,8 @@
 package com.yeo_li.yeol_post.category;
 
+import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,5 +18,15 @@ public class CategoryService {
 
   public Category findCategoryByCategoryId(Long categoryId) {
     return categoryRepository.findCategoryById(categoryId);
+  }
+
+  public List<CategoryResponse> getAllCategories() {
+    List<Category> categories = categoryRepository.findAll();
+    List<CategoryResponse> categoryResponses = new ArrayList<>();
+    for (Category category : categories) {
+      categoryResponses.add(new CategoryResponse(category.getId(), category.getCategoryName()));
+    }
+
+    return categoryResponses;
   }
 }
