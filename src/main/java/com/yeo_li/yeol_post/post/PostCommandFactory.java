@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.post;
 
-import com.yeo_li.yeol_post.admin.Admin;
-import com.yeo_li.yeol_post.admin.AdminRepository;
+import com.yeo_li.yeol_post.admin.domain.Admin;
+import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryRepository;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;

@@ -20,7 +20,7 @@ public class PostTagService {
     }
   }
 
-  public List<Tag> findTagByPostId(int postId) {
+  public List<Tag> findTagByPostId(Long postId) {
     List<PostTag> postTags = postTagRepository.findPostTagsByPost_Id(postId);
     List<Tag> tags = new ArrayList<>();
     for (PostTag postTag : postTags) {
@@ -30,7 +30,7 @@ public class PostTagService {
     return tags;
   }
 
-  public List<Post> findPostByTagId(int tagId) {
+  public List<Post> findPostByTagId(Long tagId) {
     List<PostTag> postTags = postTagRepository.findPostTagsByTag_Id(tagId);
     List<Post> posts = new ArrayList<>();
     for (PostTag postTag : postTags) {
@@ -40,11 +40,11 @@ public class PostTagService {
     return posts;
   }
 
-  public List<PostTag> findPostTagByPostId(int postId) {
+  public List<PostTag> findPostTagByPostId(Long postId) {
     return postTagRepository.findPostTagsByPost_Id(postId);
   }
 
-  public void deletePostTag(int postTagId) {
+  public void deletePostTag(Long postTagId) {
     postTagRepository.deletePostTagById(postTagId);
   }
 }

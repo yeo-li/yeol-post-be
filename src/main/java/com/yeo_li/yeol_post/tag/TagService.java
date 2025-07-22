@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.tag;
 
-import com.yeo_li.yeol_post.common.response.exception.BusinessException;
-import com.yeo_li.yeol_post.common.response.exception.ErrorCode;
+import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
+import com.yeo_li.yeol_post.common.response.handler.TagHandler;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class TagService {
 
   public Tag findTagByTagName(String tagName) {
     return tagRepository.findByTagName(tagName)
-        .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
+        .orElseThrow(() -> new TagHandler(ErrorStatus.NOT_FOUND));
   }
 
   public Tag findTagById(int tagId) {

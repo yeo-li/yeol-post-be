@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.auth;
 
-import com.yeo_li.yeol_post.admin.Admin;
-import com.yeo_li.yeol_post.admin.AdminRepository;
+import com.yeo_li.yeol_post.admin.domain.Admin;
+import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

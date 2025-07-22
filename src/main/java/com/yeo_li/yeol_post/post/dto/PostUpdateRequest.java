@@ -5,13 +5,13 @@ import java.util.List;
 
 public record PostUpdateRequest(
     @JsonProperty("post_id")
-    Integer postId,
+    Long postId,
     String title,
     String content,
     String summary,
     String author,
     @JsonProperty("category_id")
-    Integer categoryId,
+    Long categoryId,
     @JsonProperty("tag_ids")
     List<Integer> tagIds
 ) {

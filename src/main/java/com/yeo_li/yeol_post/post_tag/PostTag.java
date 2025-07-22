@@ -21,7 +21,7 @@ public class PostTag extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "post_id", nullable = false)

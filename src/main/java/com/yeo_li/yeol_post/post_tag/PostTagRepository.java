@@ -7,9 +7,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostTagRepository extends JpaRepository<PostTag, Long> {
 
-  List<PostTag> findPostTagsByPost_Id(int post_id);
+  List<PostTag> findPostTagsByPost_Id(Long post_id);
 
-  List<PostTag> findPostTagsByTag_Id(int tag_id);
+  List<PostTag> findPostTagsByTag_Id(Long tag_id);
 
-  void deletePostTagById(int id);
+  void deletePostTagById(Long id);
 }
