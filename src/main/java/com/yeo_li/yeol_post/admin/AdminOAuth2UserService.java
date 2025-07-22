@@ -1,5 +1,7 @@
 package com.yeo_li.yeol_post.admin;
 
+import com.yeo_li.yeol_post.admin.domain.Admin;
+import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

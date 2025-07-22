@@ -2,8 +2,6 @@ package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryService;
-import com.yeo_li.yeol_post.common.exception.BusinessException;
-import com.yeo_li.yeol_post.common.exception.ErrorCode;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
@@ -27,7 +25,7 @@ public class PostService {
   private final PostTagService postTagService;
   private final CategoryService categoryService;
 
-  public int createPost(PostCreateCommand command) {
+  public Long createPost(PostCreateCommand command) {
     List<Tag> tags = tagService.findOrCreateAll(command.tags());
     Post post = postRepository.save(command.toEntity());
     postTagService.createPostTag(post, tags);
@@ -107,8 +105,7 @@ public class PostService {
 
   @Transactional
   public void updatePost(PostUpdateRequest request) {
-    Post post = postRepository.findById(request.postId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.DATA_NOT_FOUND));
+    Post post = postRepository.findPostById(request.postId());
 
     if (request.title() != null) {
       post.setTitle(request.title());

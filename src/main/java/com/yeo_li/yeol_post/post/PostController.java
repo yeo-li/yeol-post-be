@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.auth.AuthorizationService;
-import com.yeo_li.yeol_post.common.dto.CommonResponse;
+import com.yeo_li.yeol_post.common.response.ApiResponse;
 import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
@@ -44,7 +44,9 @@ public class PostController {
 
     postService.createPost(postCommandFactory.createPostCommand(request));
 
-    return ResponseEntity.ok("게시물 저장 완료");
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(ApiResponse.onSuccess());
   }
 
   @GetMapping
@@ -62,7 +64,7 @@ public class PostController {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(CommonResponse.success(postResponses));
+        .body(ApiResponse.onSuccess(postResponses));
   }
 
   @DeleteMapping("/{postId}")
@@ -72,7 +74,7 @@ public class PostController {
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(CommonResponse.success(null));
+        .body(ApiResponse.onSuccess());
   }
 
   @PatchMapping("/{postId}")
@@ -81,13 +83,13 @@ public class PostController {
       @RequestBody PostUpdateRequest request) {
 
     // 인가 사용자인지 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+//    Map<String, Object> attributes = principal.getAttributes();
+//    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
     postService.updatePost(request);
 
     return ResponseEntity
         .status(HttpStatus.OK)
-        .body(CommonResponse.success(null));
+        .body(ApiResponse.onSuccess());
   }
 }

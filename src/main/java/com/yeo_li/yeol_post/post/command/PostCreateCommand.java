@@ -1,6 +1,6 @@
 package com.yeo_li.yeol_post.post.command;
 
-import com.yeo_li.yeol_post.admin.Admin;
+import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.post.Post;
 import jakarta.validation.constraints.NotBlank;

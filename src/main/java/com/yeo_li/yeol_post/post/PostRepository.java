@@ -10,6 +10,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
+  Post findPostById(Long id);
+
   @Query("SELECT p FROM Post p where LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
   List<Post> searchPostByTitle(@Param("keyword") String keyword);
 

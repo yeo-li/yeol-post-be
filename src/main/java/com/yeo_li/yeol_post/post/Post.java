@@ -1,6 +1,6 @@
 package com.yeo_li.yeol_post.post;
 
-import com.yeo_li.yeol_post.admin.Admin;
+import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.post_tag.PostTag;
@@ -27,7 +27,7 @@ public class Post extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int id;
+  private Long id;
 
   @Column(nullable = false)
   private String title;
@@ -40,6 +40,7 @@ public class Post extends BaseTimeEntity {
   @Column(nullable = false)
   private String author;
 
+  @Column(name = "published_at")
   private LocalDateTime publishedAt;
 
   @Column(nullable = false, columnDefinition = "boolean default false")

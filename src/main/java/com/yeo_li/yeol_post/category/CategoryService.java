@@ -13,7 +13,7 @@ public class CategoryService {
     return categoryRepository.findCategoryByCategoryName(categoryName);
   }
 
-  public Category findCategoryByCategoryId(int categoryId) {
+  public Category findCategoryByCategoryId(Long categoryId) {
     return categoryRepository.findCategoryById(categoryId);
   }
 }
