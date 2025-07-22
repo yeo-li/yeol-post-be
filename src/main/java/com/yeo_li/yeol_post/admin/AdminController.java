@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.admin;
 
+import com.yeo_li.yeol_post.admin.dto.AdminPasswordUpdateRequest;
 import com.yeo_li.yeol_post.admin.dto.AdminUpdateRequest;
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/api/v1/admins")
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -52,10 +53,27 @@ public class AdminController {
       @RequestBody AdminUpdateRequest request) {
 
     // 인증, 인가 검증
+    Map<String, Object> attributes = principal.getAttributes();
+    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+
+    adminService.updateAdmin(adminId, request);
+
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(ApiResponse.onSuccess());
+  }
+
+  @PatchMapping("/{adminId}/password")
+  public ResponseEntity<ApiResponse<Object>> updatePassword(
+      @AuthenticationPrincipal OAuth2User principal,
+      @PathVariable Long adminId,
+      @RequestBody AdminPasswordUpdateRequest request) {
+
+    // 인증, 인가 검증
 //    Map<String, Object> attributes = principal.getAttributes();
 //    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    adminService.updateAdmin(adminId, request);
+    adminService.updateAdminPassword(adminId, request);
 
     return ResponseEntity
         .status(HttpStatus.OK)

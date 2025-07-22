@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.admin;
 
 import com.yeo_li.yeol_post.admin.domain.Admin;
+import com.yeo_li.yeol_post.admin.dto.AdminPasswordUpdateRequest;
 import com.yeo_li.yeol_post.admin.dto.AdminUpdateRequest;
 import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import jakarta.transaction.Transactional;
@@ -28,6 +29,15 @@ public class AdminService {
     }
     if (request.email() != null) {
       admin.setEmail(request.email());
+    }
+  }
+
+  @Transactional
+  public void updateAdminPassword(Long adminId, AdminPasswordUpdateRequest request) {
+    Admin admin = adminRepository.findAdminById(adminId);
+
+    if (request.password() != null) {
+      admin.setPassword(request.password());
     }
   }
 }
