@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.common.exception;
+package com.yeo_li.yeol_post.common.response.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

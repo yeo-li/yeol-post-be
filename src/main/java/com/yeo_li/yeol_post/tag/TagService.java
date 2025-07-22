@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.tag;
 
-import com.yeo_li.yeol_post.common.exception.BusinessException;
-import com.yeo_li.yeol_post.common.exception.ErrorCode;
+import com.yeo_li.yeol_post.common.response.exception.BusinessException;
+import com.yeo_li.yeol_post.common.response.exception.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
