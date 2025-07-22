@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.category;
 
+import com.yeo_li.yeol_post.category.dto.command.CategoryCreateCommand;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,5 +29,9 @@ public class CategoryService {
     }
 
     return categoryResponses;
+  }
+
+  public void saveCategory(CategoryCreateCommand command) {
+    categoryRepository.save(command.toEntity());
   }
 }
