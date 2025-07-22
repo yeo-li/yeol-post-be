@@ -70,8 +70,8 @@ public class AdminController {
       @RequestBody AdminPasswordUpdateRequest request) {
 
     // 인증, 인가 검증
-//    Map<String, Object> attributes = principal.getAttributes();
-//    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    Map<String, Object> attributes = principal.getAttributes();
+    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
     adminService.updateAdminPassword(adminId, request);
 
