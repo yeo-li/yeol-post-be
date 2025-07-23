@@ -2,6 +2,10 @@ package com.yeo_li.yeol_post.category;
 
 import com.yeo_li.yeol_post.category.dto.command.CategoryCreateCommand;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
+import com.yeo_li.yeol_post.category.exception.CategoryException;
+import com.yeo_li.yeol_post.category.exception.CategoryExceptionType;
+import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +16,8 @@ import org.springframework.stereotype.Service;
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
+
+  private final PostRepositoryFacade postRepositoryFacade;
 
   public Category findCategoryByCategoryName(String categoryName) {
     return categoryRepository.findCategoryByCategoryName(categoryName);
@@ -31,7 +37,24 @@ public class CategoryService {
     return categoryResponses;
   }
 
+
   public void saveCategory(CategoryCreateCommand command) {
     categoryRepository.save(command.toEntity());
   }
+
+  @Transactional
+  public void deleteCategory(Long categoryId) {
+    Category category = categoryRepository.findCategoryById(categoryId);
+
+    if (category == null) {
+      throw new CategoryException(CategoryExceptionType.CATEGORY_NOT_FOUND);
+    }
+
+    if (postRepositoryFacade.existsPostByCategoryId(category)) {
+      throw new CategoryException(CategoryExceptionType.CATEGORY_NOT_DELETABLE);
+    }
+
+    categoryRepository.deleteCategoryById(categoryId);
+  }
+
 }

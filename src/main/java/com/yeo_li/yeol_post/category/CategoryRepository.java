@@ -9,4 +9,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
   Category findCategoryByCategoryName(String categoryName);
 
   Category findCategoryById(Long categoryId);
+
+  void deleteCategoryById(Long categoryId);
 }
