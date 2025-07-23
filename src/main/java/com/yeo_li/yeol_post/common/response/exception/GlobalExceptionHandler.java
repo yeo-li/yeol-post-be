@@ -4,30 +4,25 @@ import com.yeo_li.yeol_post.common.response.ApiResponse;
 import com.yeo_li.yeol_post.common.response.code.Reason;
 import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @Slf4j
 @RestControllerAdvice(annotations = {RestController.class})
-public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+public class GlobalExceptionHandler {
 
   @ExceptionHandler
   public ResponseEntity<Object> validation(ConstraintViolationException e, WebRequest request) {
-    String errorMessage = e.getConstraintViolations().stream()
-        .map(ConstraintViolation::getMessage)
-        .findFirst()
-        .orElseThrow(() -> new RuntimeException("ConstraintViolationException 추출 도중 에러 발생"));
 
     return handleExceptionInternalConstraint(e,
         request);
@@ -63,20 +58,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorStatus.BUSINESS_LOGIC_ERROR.getHttpStatus(), request, e.getMessage());
   }
 
+  // @Valid 예외 핸들링
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Object> handleMethodArgumentNotValidException(
+      MethodArgumentNotValidException e) {
+
+    String message = e.getBindingResult().getFieldErrors().stream()
+        .map(DefaultMessageSourceResolvable::getDefaultMessage)
+        .findFirst()
+        .orElse("잘못된 요청입니다.");
+
+    return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(ApiResponse.onFailure(ErrorStatus.VALIDATION_ERROR.getCode(), message));
+  }
+
   private ResponseEntity<Object> handleExceptionInternal(Exception e, Reason reason,
       HttpHeaders headers, HttpServletRequest request) {
 
     ApiResponse<Object> body = ApiResponse.onFailure(reason.getCode(), reason.getMessage());
 //        e.printStackTrace();
 
-    WebRequest webRequest = new ServletWebRequest(request);
-    return super.handleExceptionInternal(
-        e,
-        body,
-        headers,
-        reason.getHttpStatus(),
-        webRequest
-    );
+    // WebRequest webRequest = new ServletWebRequest(request);
+    return new ResponseEntity<>(body, headers, reason.getHttpStatus());
   }
 
   private ResponseEntity<Object> handleExceptionInternalFalse(Exception e,
@@ -84,13 +88,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       HttpHeaders headers, HttpStatus status, WebRequest request, String errorPoint) {
     ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(),
         errorCommonStatus.getMessage(), errorPoint);
-    return super.handleExceptionInternal(
-        e,
-        body,
-        headers,
-        status,
-        request
-    );
+    return new ResponseEntity<>(body, headers, status);
   }
 
   private ResponseEntity<Object> handleExceptionInternalArgs(Exception e, HttpHeaders headers,
@@ -98,25 +96,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       WebRequest request, Map<String, String> errorArgs) {
     ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(),
         errorCommonStatus.getMessage(), errorArgs);
-    return super.handleExceptionInternal(
-        e,
-        body,
-        headers,
-        errorCommonStatus.getHttpStatus(),
-        request
-    );
+    return new ResponseEntity<>(body, headers, errorCommonStatus.getHttpStatus());
   }
 
   private ResponseEntity<Object> handleExceptionInternalConstraint(Exception e,
       WebRequest request) {
     ApiResponse<Object> body = ApiResponse.onFailure(ErrorStatus.VALIDATION_ERROR.getCode(),
         ErrorStatus.VALIDATION_ERROR.getMessage());
-    return super.handleExceptionInternal(
-        e,
-        body,
-        HttpHeaders.EMPTY,
-        ErrorStatus.VALIDATION_ERROR.getHttpStatus(),
-        request
-    );
+    return new ResponseEntity<>(body, HttpHeaders.EMPTY,
+        ErrorStatus.VALIDATION_ERROR.getHttpStatus());
   }
 }
