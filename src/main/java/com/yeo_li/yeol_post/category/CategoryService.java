@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.category;
 
 import com.yeo_li.yeol_post.category.dto.command.CategoryCreateCommand;
+import com.yeo_li.yeol_post.category.dto.request.CategoryUpdateRequest;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.category.exception.CategoryException;
 import com.yeo_li.yeol_post.category.exception.CategoryExceptionType;
@@ -55,6 +56,17 @@ public class CategoryService {
     }
 
     categoryRepository.deleteCategoryById(categoryId);
+  }
+
+  @Transactional
+  public void updateCategory(Long categoryId, CategoryUpdateRequest request) {
+    Category category = categoryRepository.findCategoryById(categoryId);
+
+    if (category == null) {
+      throw new CategoryException(CategoryExceptionType.CATEGORY_NOT_FOUND);
+    }
+
+    category.setCategoryName(request.newCategoryName());
   }
 
 }
