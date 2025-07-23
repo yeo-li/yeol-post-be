@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.category;
 
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.category.dto.request.CategoryCreateRequest;
+import com.yeo_li.yeol_post.category.dto.request.CategoryUpdateRequest;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,10 +62,28 @@ public class CategoryController {
   ) {
 
     // 인증, 인가 검증
-//    Map<String, Object> attributes = principal.getAttributes();
-//    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    Map<String, Object> attributes = principal.getAttributes();
+    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
     categoryService.deleteCategory(categoryId);
+
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(ApiResponse.onSuccess());
+  }
+
+  @PatchMapping("/{categoryId}")
+  public ResponseEntity<ApiResponse<Void>> updateCategory(
+      @AuthenticationPrincipal OAuth2User principal,
+      @PathVariable Long categoryId,
+      @RequestBody @Valid CategoryUpdateRequest request
+  ) {
+
+    // 인증, 인가 검증
+    Map<String, Object> attributes = principal.getAttributes();
+    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+
+    categoryService.updateCategory(categoryId, request);
 
     return ResponseEntity
         .status(HttpStatus.OK)
