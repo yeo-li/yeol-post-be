@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.tag;
 
 import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.common.response.handler.TagHandler;
+import com.yeo_li.yeol_post.tag.dto.TagResponse;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,16 @@ public class TagService {
 
   public Tag findTagById(int tagId) {
     return tagRepository.findTagById(tagId);
+  }
+
+  public List<TagResponse> getAllTags() {
+    List<Tag> tags = tagRepository.findAll();
+
+    List<TagResponse> tagResponses = new ArrayList<>();
+    for (Tag tag : tags) {
+      tagResponses.add(new TagResponse(tag.getId(), tag.getTagName()));
+    }
+    return tagResponses;
   }
 
 }
