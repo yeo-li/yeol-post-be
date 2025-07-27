@@ -2,9 +2,11 @@ package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryService;
+import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.post_tag.PostTag;
 import com.yeo_li.yeol_post.post_tag.PostTagService;
 import com.yeo_li.yeol_post.tag.Tag;
@@ -24,6 +26,7 @@ public class PostService {
   private final TagService tagService;
   private final PostTagService postTagService;
   private final CategoryService categoryService;
+  private final PostRepositoryFacade postRepositoryFacade;
 
   public Long createPost(PostCreateCommand command) {
     List<Tag> tags = tagService.findOrCreateAll(command.tags());
@@ -31,6 +34,11 @@ public class PostService {
     postTagService.createPostTag(post, tags);
 
     return post.getId();
+  }
+
+  public List<PostResponse> getAllPosts() {
+    List<Post> posts = postRepository.findAll();
+    return convertPostResponse(posts);
   }
 
   public List<PostResponse> getPostByTitle(String title) {
@@ -75,6 +83,14 @@ public class PostService {
     return convertPostResponse(posts);
   }
 
+  public List<PostResponse> getPostRecent(Integer postCnt) {
+    if (postCnt == null) {
+      return null;
+    }
+    List<Post> posts = postRepositoryFacade.findLatestPostsNative(postCnt);
+    return convertPostResponse(posts);
+  }
+
   public List<PostResponse> convertPostResponse(List<Post> posts) {
     List<PostResponse> postResponses = new ArrayList<>();
     for (Post post : posts) {
@@ -91,7 +107,7 @@ public class PostService {
           post.getAuthor(),
           post.getContent(),
           post.getPublishedAt(),
-          post.getCategory().getCategoryName(),
+          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName()),
           tagNames
       ));
     }
