@@ -30,7 +30,11 @@ public class AdminController {
   public ResponseEntity<?> getCurrentAdmin(@AuthenticationPrincipal OAuth2User principal,
       HttpServletRequest request) {
     if (principal == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+      return ResponseEntity
+          .status(HttpStatus.OK)
+          .body(Map.of(
+              "isLoggedIn", false
+          ));
     }
 
     Map<String, Object> attributes = principal.getAttributes();
