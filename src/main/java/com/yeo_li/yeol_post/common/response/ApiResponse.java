@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.yeo_li.yeol_post.common.response.code.BaseCode;
 import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.common.response.code.resultCode.SuccessStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -14,10 +15,15 @@ import lombok.Getter;
 @JsonPropertyOrder({"isSuccess", "code", "message", "result"})
 public class ApiResponse<T> {
 
+  @Schema(description = "요청 성공 여부", example = "true")
   @JsonProperty("is_success")
   private final Boolean isSuccess;
+  @Schema(description = "상태 코드", example = "GLOBAL200")
   private final String code;
+  @Schema(description = "상태 메세지", example = "성공했습니다.")
   private final String message;
+  //  @Schema(description = "response 데이터", example = "{\"tag_id\": 1, \"tag_name\": \"spring\"}")
+  @Schema(description = "response 데이터")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private T result;
 
