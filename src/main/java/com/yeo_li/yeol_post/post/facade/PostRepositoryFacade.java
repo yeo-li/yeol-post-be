@@ -1,6 +1,8 @@
 package com.yeo_li.yeol_post.post.facade;
 
 import com.yeo_li.yeol_post.category.Category;
+import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
+import com.yeo_li.yeol_post.common.response.handler.PostHandler;
 import com.yeo_li.yeol_post.post.Post;
 import com.yeo_li.yeol_post.post.PostRepository;
 import java.util.List;
@@ -17,4 +19,13 @@ public class PostRepositoryFacade {
     List<Post> posts = postRepository.findPostsByCategory(category);
     return !posts.isEmpty();
   }
+
+  public List<Post> findLatestPostsNative(Integer postCnt) {
+    if (postCnt == null) {
+      throw new PostHandler(ErrorStatus.VALIDATION_ERROR);
+    }
+
+    return postRepository.findLatestPostsNative(postCnt);
+  }
+
 }

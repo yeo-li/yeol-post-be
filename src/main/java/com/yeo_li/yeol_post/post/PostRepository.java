@@ -19,4 +19,14 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
   @Query("SELECT p FROM Post p where LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
   List<Post> findPostsByAuthor(@Param("keyword") String keyword);
+
+  @Query(
+      value =
+          "SELECT p.* " +
+              "FROM post p " +
+              "ORDER BY p.created_at DESC " +
+              "LIMIT :postCnt",
+      nativeQuery = true
+  )
+  List<Post> findLatestPostsNative(@Param("postCnt") int postCnt);
 }

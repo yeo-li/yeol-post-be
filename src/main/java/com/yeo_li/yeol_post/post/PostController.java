@@ -2,9 +2,16 @@ package com.yeo_li.yeol_post.post;
 
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
+import com.yeo_li.yeol_post.common.swagger.ListPostResponseApiResponse;
+import com.yeo_li.yeol_post.common.swagger.VoidApiResponse;
 import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +34,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
+@Tag(name = "Post", description = "게시물 관련 API")
 public class PostController {
 
   private final AuthorizationService authorizationService;
   private final PostService postService;
   private final PostCommandFactory postCommandFactory;
 
+  @Operation(summary = "게시물 저장", description = "관리자가 작성한 게시물을 저장합니다.")
+  @ApiResponses({
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
+          description = "저장 성공"
+          , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
+  })
   @PostMapping
-  public ResponseEntity<?> savePost(@AuthenticationPrincipal OAuth2User principal,
+  public ResponseEntity<ApiResponse<Void>> savePost(@AuthenticationPrincipal OAuth2User principal,
       @RequestBody @Valid PostCreateRequest request) {
     System.out.println(request.toString());
 
@@ -49,10 +63,20 @@ public class PostController {
         .body(ApiResponse.onSuccess());
   }
 
+  @Operation(summary = "게시물 검색", description = "쿼리스트링으로 제목, 태그, 카테고리, 저자를 입력 받아 키워드와 관련된 게시물을 반환합니다.")
+  @ApiResponses({
+      @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
+          description = "검색 성공"
+          , content = @Content(schema = @Schema(implementation = ListPostResponseApiResponse.class)))
+  })
   @GetMapping
-  public ResponseEntity<?> getPostsByQueryString(@RequestParam Map<String, String> params) {
+  public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByQueryString(
+      @RequestParam Map<String, String> params) {
     List<PostResponse> postResponses = new ArrayList<>();
-    if (params.containsKey("title")) {
+    if (params.isEmpty()) {
+      postResponses = postService.getAllPosts();
+      System.out.println(postResponses.toString());
+    } else if (params.containsKey("title")) {
       postResponses = postService.getPostByTitle(params.get("title"));
     } else if (params.containsKey("tag")) {
       postResponses = postService.getPostByTag(params.get("tag"));
@@ -60,11 +84,14 @@ public class PostController {
       postResponses = postService.getPostByCategory(params.get("category"));
     } else if (params.containsKey("author")) {
       postResponses = postService.getPostByAuthor(params.get("author"));
+    } else if (params.containsKey("limit")) {
+      postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")));
     }
 
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(ApiResponse.onSuccess(postResponses));
+
   }
 
   @DeleteMapping("/{postId}")
@@ -83,8 +110,8 @@ public class PostController {
       @RequestBody PostUpdateRequest request) {
 
     // 인가 사용자인지 검증
-//    Map<String, Object> attributes = principal.getAttributes();
-//    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    Map<String, Object> attributes = principal.getAttributes();
+    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
     postService.updatePost(request);
 
