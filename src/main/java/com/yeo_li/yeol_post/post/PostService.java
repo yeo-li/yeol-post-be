@@ -107,7 +107,8 @@ public class PostService {
           post.getAuthor(),
           post.getContent(),
           post.getPublishedAt(),
-          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName()),
+          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
+              postRepositoryFacade.countPostByCategory(post.getCategory())),
           tagNames
       ));
     }

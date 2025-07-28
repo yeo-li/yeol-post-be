@@ -6,7 +6,9 @@ public record CategoryResponse(
     @JsonProperty("category_id")
     Long categoryId,
     @JsonProperty("category_name")
-    String categoryName
+    String categoryName,
+    @JsonProperty("post_count")
+    Integer postCount
 ) {
 
 }

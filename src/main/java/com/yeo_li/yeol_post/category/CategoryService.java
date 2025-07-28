@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 public class CategoryService {
 
   private final CategoryRepository categoryRepository;
-
   private final PostRepositoryFacade postRepositoryFacade;
 
   public Category findCategoryByCategoryName(String categoryName) {
@@ -30,9 +29,11 @@ public class CategoryService {
 
   public List<CategoryResponse> getAllCategories() {
     List<Category> categories = categoryRepository.findAll();
+
     List<CategoryResponse> categoryResponses = new ArrayList<>();
     for (Category category : categories) {
-      categoryResponses.add(new CategoryResponse(category.getId(), category.getCategoryName()));
+      categoryResponses.add(new CategoryResponse(category.getId(), category.getCategoryName(),
+          postRepositoryFacade.countPostByCategory(category)));
     }
 
     return categoryResponses;

@@ -28,4 +28,10 @@ public class PostRepositoryFacade {
     return postRepository.findLatestPostsNative(postCnt);
   }
 
+  public int countPostByCategory(Category category) {
+    List<Post> posts = postRepository.findPostsByCategory(category);
+
+    return posts.size();
+  }
+
 }
