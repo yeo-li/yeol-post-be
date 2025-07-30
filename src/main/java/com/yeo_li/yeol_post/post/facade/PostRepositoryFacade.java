@@ -34,4 +34,8 @@ public class PostRepositoryFacade {
     return posts.size();
   }
 
+  public List<Post> findPostsByCategory(Category category) {
+    return postRepository.findPostsByCategory(category);
+  }
+
 }
