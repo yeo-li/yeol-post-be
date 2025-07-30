@@ -11,4 +11,6 @@ public interface AdminRepository extends JpaRepository<Admin, Long> {
   Optional<Admin> findByKakaoId(String kakaoId);
 
   Admin findAdminById(Long id);
+
+  Admin findAdminByKakaoId(String kakaoId);
 }
