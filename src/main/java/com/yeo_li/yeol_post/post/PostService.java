@@ -121,8 +121,8 @@ public class PostService {
   }
 
   @Transactional
-  public void updatePost(PostUpdateRequest request) {
-    Post post = postRepository.findPostById(request.postId());
+  public void updatePost(Long postId, PostUpdateRequest request) {
+    Post post = postRepository.findPostById(postId);
 
     if (request.title() != null) {
       post.setTitle(request.title());
@@ -140,19 +140,15 @@ public class PostService {
       Category category = categoryService.findCategoryByCategoryId(request.categoryId());
       post.setCategory(category);
     }
-    if (request.tagIds() != null) {
-      List<Tag> tags = new ArrayList<>();
-      for (int tagId : request.tagIds()) {
-        tags.add(tagService.findTagById(tagId));
-      }
 
-      List<PostTag> postTags = postTagService.findPostTagByPostId(request.postId());
-      for (PostTag postTag : postTags) {
-        postTagService.deletePostTag(postTag.getId());
-      }
+    List<Tag> tags = tagService.findOrCreateAll(request.tags());
 
-      postTagService.createPostTag(post, tags);
+    List<PostTag> postTags = postTagService.findPostTagByPostId(postId);
+    for (PostTag postTag : postTags) {
+      postTagService.deletePostTag(postTag.getId());
     }
+
+    postTagService.createPostTag(post, tags);
 
   }
 
