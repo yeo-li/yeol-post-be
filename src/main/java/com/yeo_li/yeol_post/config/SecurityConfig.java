@@ -64,7 +64,7 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration config = new CorsConfiguration();
     config.setAllowedOrigins(List.of(ORIGIN)); // 프론트 주소
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
     config.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN"));
     config.setExposedHeaders(List.of("X-XSRF-TOKEN"));
     config.setAllowCredentials(true); // 쿠키 포함 요청 허용
