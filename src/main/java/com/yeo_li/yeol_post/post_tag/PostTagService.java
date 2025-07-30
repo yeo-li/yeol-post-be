@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,8 @@ public class PostTagService {
     return postTagRepository.findPostTagsByPost_Id(postId);
   }
 
+  @Transactional
   public void deletePostTag(Long postTagId) {
-    postTagRepository.deletePostTagById(postTagId);
+    postTagRepository.deleteById(postTagId);
   }
 }

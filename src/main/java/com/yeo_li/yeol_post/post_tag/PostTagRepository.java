@@ -11,5 +11,4 @@ public interface PostTagRepository extends JpaRepository<PostTag, Long> {
 
   List<PostTag> findPostTagsByTag_Id(Long tag_id);
 
-  void deletePostTagById(Long id);
 }

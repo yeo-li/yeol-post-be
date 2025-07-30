@@ -50,8 +50,6 @@ public class PostController {
   @PostMapping
   public ResponseEntity<ApiResponse<Void>> savePost(@AuthenticationPrincipal OAuth2User principal,
       @RequestBody @Valid PostCreateRequest request) {
-    System.out.println(request.toString());
-
     // 인가 사용자인지 검증
     Map<String, Object> attributes = principal.getAttributes();
     authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
@@ -107,13 +105,14 @@ public class PostController {
   @PatchMapping("/{postId}")
   public ResponseEntity<?> updatePost(
       @AuthenticationPrincipal OAuth2User principal,
+      @PathVariable("postId") Long postId,
       @RequestBody PostUpdateRequest request) {
 
     // 인가 사용자인지 검증
     Map<String, Object> attributes = principal.getAttributes();
     authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    postService.updatePost(request);
+    postService.updatePost(postId, request);
 
     return ResponseEntity
         .status(HttpStatus.OK)

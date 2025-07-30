@@ -37,8 +37,7 @@ public class PostService {
   }
 
   public List<PostResponse> getAllPosts() {
-    List<Post> posts = postRepository.findAll();
-    return convertPostResponse(posts);
+    return getPostRecent();
   }
 
   public List<PostResponse> getPostByTitle(String title) {
@@ -91,6 +90,11 @@ public class PostService {
     return convertPostResponse(posts);
   }
 
+  public List<PostResponse> getPostRecent() {
+    List<Post> posts = postRepositoryFacade.findLatestPostsNative(1000000);
+    return convertPostResponse(posts);
+  }
+
   public List<PostResponse> convertPostResponse(List<Post> posts) {
     List<PostResponse> postResponses = new ArrayList<>();
     for (Post post : posts) {
@@ -121,8 +125,8 @@ public class PostService {
   }
 
   @Transactional
-  public void updatePost(PostUpdateRequest request) {
-    Post post = postRepository.findPostById(request.postId());
+  public void updatePost(Long postId, PostUpdateRequest request) {
+    Post post = postRepository.findPostById(postId);
 
     if (request.title() != null) {
       post.setTitle(request.title());
@@ -140,19 +144,15 @@ public class PostService {
       Category category = categoryService.findCategoryByCategoryId(request.categoryId());
       post.setCategory(category);
     }
-    if (request.tagIds() != null) {
-      List<Tag> tags = new ArrayList<>();
-      for (int tagId : request.tagIds()) {
-        tags.add(tagService.findTagById(tagId));
-      }
 
-      List<PostTag> postTags = postTagService.findPostTagByPostId(request.postId());
-      for (PostTag postTag : postTags) {
-        postTagService.deletePostTag(postTag.getId());
-      }
+    List<Tag> tags = tagService.findOrCreateAll(request.tags());
 
-      postTagService.createPostTag(post, tags);
+    List<PostTag> postTags = postTagService.findPostTagByPostId(postId);
+    for (PostTag postTag : postTags) {
+      postTagService.deletePostTag(postTag.getId());
     }
+
+    postTagService.createPostTag(post, tags);
 
   }
 

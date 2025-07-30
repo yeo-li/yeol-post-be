@@ -15,7 +15,8 @@ public class CorsConfig {
       public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
             .allowedOrigins("http://localhost:3000") // 프론트 주소
-            .allowedMethods("GET", "POST", "PUT", "DELETE")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            .allowedHeaders("Content-Type")
             .allowCredentials(true); // ✅ 꼭 있어야 JSESSIONID 전달됨
       }
     };

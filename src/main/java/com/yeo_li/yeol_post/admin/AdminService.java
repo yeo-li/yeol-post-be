@@ -16,6 +16,10 @@ public class AdminService {
 
   private final AdminRepository adminRepository;
 
+  public Admin findAdminByKakaoId(String kakaoId) {
+    return adminRepository.findAdminByKakaoId(kakaoId);
+  }
+
   @Transactional
   public void updateAdmin(Long adminId, AdminUpdateRequest request) {
     Admin admin = adminRepository.findAdminById(adminId);

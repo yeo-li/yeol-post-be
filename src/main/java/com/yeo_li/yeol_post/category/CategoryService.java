@@ -2,10 +2,14 @@ package com.yeo_li.yeol_post.category;
 
 import com.yeo_li.yeol_post.category.dto.command.CategoryCreateCommand;
 import com.yeo_li.yeol_post.category.dto.request.CategoryUpdateRequest;
+import com.yeo_li.yeol_post.category.dto.response.CategoryRecentResponse;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.category.exception.CategoryException;
 import com.yeo_li.yeol_post.category.exception.CategoryExceptionType;
+import com.yeo_li.yeol_post.post.Post;
+import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
+import com.yeo_li.yeol_post.post_tag.PostTag;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +36,9 @@ public class CategoryService {
 
     List<CategoryResponse> categoryResponses = new ArrayList<>();
     for (Category category : categories) {
+      if (postRepositoryFacade.countPostByCategory(category) == 0) {
+        continue;
+      }
       categoryResponses.add(new CategoryResponse(category.getId(), category.getCategoryName(),
           postRepositoryFacade.countPostByCategory(category)));
     }
@@ -68,6 +75,46 @@ public class CategoryService {
     }
 
     category.setCategoryName(request.newCategoryName());
+  }
+
+  public List<CategoryRecentResponse> getAllCategoryRecentPost() {
+    List<CategoryRecentResponse> categoryRecentResponses = new ArrayList<>();
+
+    List<Category> categories = categoryRepository.findAll();
+    for (Category category : categories) {
+      List<Post> posts = postRepositoryFacade.findPostsByCategory(category);
+      if (posts.isEmpty()) {
+        continue;
+      }
+      Post post = posts.getFirst();
+      PostResponse postResponse = new PostResponse(
+          post.getId(),
+          post.getTitle(),
+          post.getSummary(),
+          post.getAuthor(),
+          post.getContent(),
+          post.getPublishedAt(),
+          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
+              postRepositoryFacade.countPostByCategory(post.getCategory())),
+          toTagNames(post.getPostTags())
+      );
+      categoryRecentResponses.add(CategoryRecentResponse.builder()
+          .categoryId(category.getId())
+          .categoryName(category.getCategoryName())
+          .description("testtest")
+          .postCount(postResponse.category().postCount())
+          .post(postResponse)
+          .build());
+    }
+    return categoryRecentResponses;
+  }
+
+  private List<String> toTagNames(List<PostTag> postTags) {
+    List<String> tagNames = new ArrayList<>();
+    for (PostTag postTag : postTags) {
+      tagNames.add(postTag.getTag().getTagName());
+    }
+    return tagNames;
   }
 
 }

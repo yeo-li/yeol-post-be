@@ -3,6 +3,7 @@ package com.yeo_li.yeol_post.category;
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.category.dto.request.CategoryCreateRequest;
 import com.yeo_li.yeol_post.category.dto.request.CategoryUpdateRequest;
+import com.yeo_li.yeol_post.category.dto.response.CategoryRecentResponse;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -88,5 +89,12 @@ public class CategoryController {
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(ApiResponse.onSuccess());
+  }
+
+  @GetMapping("recent")
+  public ResponseEntity<ApiResponse<List<CategoryRecentResponse>>> getRecentCategories() {
+    return ResponseEntity
+        .status(HttpStatus.OK)
+        .body(ApiResponse.onSuccess(categoryService.getAllCategoryRecentPost()));
   }
 }
