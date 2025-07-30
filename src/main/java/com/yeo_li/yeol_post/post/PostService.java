@@ -37,8 +37,7 @@ public class PostService {
   }
 
   public List<PostResponse> getAllPosts() {
-    List<Post> posts = postRepository.findAll();
-    return convertPostResponse(posts);
+    return getPostRecent();
   }
 
   public List<PostResponse> getPostByTitle(String title) {
@@ -88,6 +87,11 @@ public class PostService {
       return null;
     }
     List<Post> posts = postRepositoryFacade.findLatestPostsNative(postCnt);
+    return convertPostResponse(posts);
+  }
+
+  public List<PostResponse> getPostRecent() {
+    List<Post> posts = postRepositoryFacade.findLatestPostsNative(1000000);
     return convertPostResponse(posts);
   }
 
