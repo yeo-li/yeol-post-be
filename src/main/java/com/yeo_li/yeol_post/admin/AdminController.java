@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.admin;
 
+import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.admin.dto.AdminPasswordUpdateRequest;
 import com.yeo_li.yeol_post.admin.dto.AdminUpdateRequest;
 import com.yeo_li.yeol_post.auth.AuthorizationService;
@@ -44,8 +45,11 @@ public class AdminController {
 
     authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
+    Admin admin = adminService.findAdminByKakaoId(String.valueOf(attributes.get("id")));
+
     return ResponseEntity.ok(Map.of(
         "nickname", nickname,
+        "admin_id", admin.getId(),
         "isLoggedIn", true
     ));
   }
