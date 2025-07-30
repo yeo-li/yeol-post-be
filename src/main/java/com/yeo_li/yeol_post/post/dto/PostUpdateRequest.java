@@ -12,8 +12,8 @@ public record PostUpdateRequest(
     String author,
     @JsonProperty("category_id")
     Long categoryId,
-    @JsonProperty("tag_ids")
-    List<Integer> tagIds
+    @JsonProperty("tags")
+    List<String> tags
 ) {
 
 }
