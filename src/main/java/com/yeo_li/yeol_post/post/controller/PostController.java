@@ -1,12 +1,14 @@
-package com.yeo_li.yeol_post.post;
+package com.yeo_li.yeol_post.post.controller;
 
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
 import com.yeo_li.yeol_post.common.swagger.ListPostResponseApiResponse;
 import com.yeo_li.yeol_post.common.swagger.VoidApiResponse;
+import com.yeo_li.yeol_post.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.post.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -70,20 +72,30 @@ public class PostController {
   @GetMapping
   public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByQueryString(
       @RequestParam Map<String, String> params) {
+    // TODO: sibal refactoring
     List<PostResponse> postResponses = new ArrayList<>();
     if (params.isEmpty()) {
-      postResponses = postService.getAllPosts();
-      System.out.println(postResponses.toString());
-    } else if (params.containsKey("title")) {
+      postResponses = postService.getAllPosts(); // 완료 모든 게시물 반환
+    } else if (params.containsKey("title")) { // 사용자 -> 완료 출간된 게시물만 반환
       postResponses = postService.getPostByTitle(params.get("title"));
-    } else if (params.containsKey("tag")) {
+    } else if (params.containsKey("tag")) { // 사용자 -> 완료 -> 출간된 게시물만 반환
       postResponses = postService.getPostByTag(params.get("tag"));
-    } else if (params.containsKey("category")) {
+    } else if (params.containsKey("category")) { // 사용자 -> 완료 -> 출간된 게시물만 반환
       postResponses = postService.getPostByCategory(params.get("category"));
-    } else if (params.containsKey("author")) {
+    } else if (params.containsKey("author")) { // 사용자 -> 완료 -> 출간된 게시물만 반환
       postResponses = postService.getPostByAuthor(params.get("author"));
+    } else if (params.containsKey("limit") && params.containsKey(
+        "is_published")) { // 사용자 & 관리자 -> 여기만 검사해주면 될듯
+      postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")),
+          Boolean.parseBoolean(params.get("is_published")));
+    } else if (params.containsKey("is_published")) { // 관리자
+      if (Boolean.parseBoolean(params.get("is_published"))) {
+        postResponses = postService.getAllPublishedPosts();
+      } else {
+        postResponses = postService.getAllDraftPosts();
+      }
     } else if (params.containsKey("limit")) {
-      postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")));
+      postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")), true);
     }
 
     return ResponseEntity

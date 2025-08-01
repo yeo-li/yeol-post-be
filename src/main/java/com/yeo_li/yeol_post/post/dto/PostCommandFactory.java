@@ -1,11 +1,10 @@
-package com.yeo_li.yeol_post.post;
+package com.yeo_li.yeol_post.post.dto;
 
 import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryRepository;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
-import com.yeo_li.yeol_post.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.tag.TagRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

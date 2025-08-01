@@ -6,7 +6,7 @@ import com.yeo_li.yeol_post.category.dto.response.CategoryRecentResponse;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.category.exception.CategoryException;
 import com.yeo_li.yeol_post.category.exception.CategoryExceptionType;
-import com.yeo_li.yeol_post.post.Post;
+import com.yeo_li.yeol_post.post.domain.Post;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.post_tag.PostTag;
@@ -93,6 +93,7 @@ public class CategoryService {
           post.getSummary(),
           post.getAuthor(),
           post.getContent(),
+          post.getIsPublished(),
           post.getPublishedAt(),
           new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
               postRepositoryFacade.countPostByCategory(post.getCategory())),
