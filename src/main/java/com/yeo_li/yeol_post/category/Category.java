@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.category;
 
 import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
-import com.yeo_li.yeol_post.post.Post;
+import com.yeo_li.yeol_post.post.domain.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

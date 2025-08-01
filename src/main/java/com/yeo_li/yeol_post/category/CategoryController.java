@@ -92,7 +92,7 @@ public class CategoryController {
   }
 
   @GetMapping("recent")
-  public ResponseEntity<ApiResponse<List<CategoryRecentResponse>>> getRecentCategories() {
+  public ResponseEntity<ApiResponse<List<CategoryRecentResponse>>> getRecentPublishedCategories() {
     return ResponseEntity
         .status(HttpStatus.OK)
         .body(ApiResponse.onSuccess(categoryService.getAllCategoryRecentPost()));

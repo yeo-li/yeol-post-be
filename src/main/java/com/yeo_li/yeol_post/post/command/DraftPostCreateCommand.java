@@ -8,23 +8,21 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record PostCreateCommand(
+public record DraftPostCreateCommand(
     @NotBlank
-    String title, // 있음
-    String summary, // 있음
-    String author, // 있음
-    String content, // 있음
+    String title,
+    String summary,
+    String author,
+    @NotBlank
+    String content,
     @NotNull
-    Boolean isPublished, // Fact -
-    LocalDateTime publishedAt, // Fact -
+    Boolean isPublished,
+    LocalDateTime publishedAt,
+    Admin admin,
+    Category category,
+    List<String> tags,
     @NotNull
-    Admin admin, // Fact -
-    // todo : 카테고리 repository, save, findByName 구현
-    Category category, // Fact -
-    // todo : postTag repository, save, findByName 구현
-    List<String> tags, // Fact -
-    @NotNull
-    Boolean isDeleted // Fact -
+    Boolean isDeleted
 ) {
 
   public Post toEntity() {
@@ -34,8 +32,8 @@ public record PostCreateCommand(
     post.setSummary(this.summary);
     post.setAuthor(this.author);
     post.setContent(this.content);
-    post.setPublishedAt(this.publishedAt);
-    post.setIsPublished(this.isPublished);
+    post.setPublishedAt(null);
+    post.setIsPublished(false);
     post.setIsDeleted(this.isDeleted);
     post.setCategory(this.category);
     post.setAdmin(this.admin);
@@ -43,3 +41,4 @@ public record PostCreateCommand(
     return post;
   }
 }
+

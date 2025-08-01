@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.post;
+package com.yeo_li.yeol_post.post.domain;
 
 import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.category.Category;
@@ -39,7 +39,7 @@ public class Post extends BaseTimeEntity {
 
   private String summary;
 
-  @Column(nullable = false)
+  // @Column(nullable = false)
   private String author;
 
   @Column(name = "published_at")

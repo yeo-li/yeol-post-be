@@ -1,12 +1,14 @@
-package com.yeo_li.yeol_post.post;
+package com.yeo_li.yeol_post.post.service;
 
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryService;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
+import com.yeo_li.yeol_post.post.domain.Post;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
 import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
+import com.yeo_li.yeol_post.post.repository.PostRepository;
 import com.yeo_li.yeol_post.post_tag.PostTag;
 import com.yeo_li.yeol_post.post_tag.PostTagService;
 import com.yeo_li.yeol_post.tag.Tag;
@@ -37,7 +39,13 @@ public class PostService {
   }
 
   public List<PostResponse> getAllPosts() {
-    return getPostRecent();
+    List<Post> allPosts = postRepositoryFacade.findAllPosts();
+    return convertPostResponse(allPosts);
+  }
+
+  public List<PostResponse> getAllPublishedPosts() {
+    List<Post> posts = postRepository.findByIsPublishedTrueOrderByPublishedAtDesc();
+    return convertPostResponse(posts);
   }
 
   public List<PostResponse> getPostByTitle(String title) {
@@ -45,7 +53,8 @@ public class PostService {
       return null;
     }
 
-    List<Post> posts = postRepository.searchPostByTitle(title);
+    List<Post> posts = postRepository.searchPostByTitleAndIsPublishedTrueOrderByPublishedAtDesc(
+        title);
     if (posts == null) {
       return null;
     }
@@ -60,6 +69,7 @@ public class PostService {
     }
     Tag tag = tagService.findTagByTagName(tagName);
     List<Post> posts = postTagService.findPostByTagId(tag.getId());
+    posts.sort((o1, o2) -> o1.getIsPublished().compareTo(o2.getIsPublished()));
     return convertPostResponse(posts);
   }
 
@@ -69,7 +79,8 @@ public class PostService {
     }
 
     Category category = categoryService.findCategoryByCategoryName(categoryName);
-    List<Post> posts = postRepository.findPostsByCategory(category);
+    List<Post> posts = postRepository.findPostsByCategoryAndIsPublishedTrueOrderByPublishedAtDesc(
+        category);
     return convertPostResponse(posts);
   }
 
@@ -78,20 +89,21 @@ public class PostService {
       return null;
     }
 
-    List<Post> posts = postRepository.findPostsByAuthor(author);
+    List<Post> posts = postRepository.findPostsByAuthorAndIsPublishedTrueOrderByIsPublishedDesc(
+        author);
     return convertPostResponse(posts);
   }
 
-  public List<PostResponse> getPostRecent(Integer postCnt) {
+  public List<PostResponse> getPostRecent(Integer postCnt, Boolean isPublished) {
     if (postCnt == null) {
       return null;
     }
-    List<Post> posts = postRepositoryFacade.findLatestPostsNative(postCnt);
+    List<Post> posts = postRepositoryFacade.findLatestPostsNative(postCnt, isPublished);
     return convertPostResponse(posts);
   }
 
   public List<PostResponse> getPostRecent() {
-    List<Post> posts = postRepositoryFacade.findLatestPostsNative(1000000);
+    List<Post> posts = postRepositoryFacade.findLatestPostsNative(Integer.MAX_VALUE, true);
     return convertPostResponse(posts);
   }
 
@@ -110,6 +122,7 @@ public class PostService {
           post.getSummary(),
           post.getAuthor(),
           post.getContent(),
+          post.getIsPublished(),
           post.getPublishedAt(),
           new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
               postRepositoryFacade.countPostByCategory(post.getCategory())),
@@ -154,6 +167,11 @@ public class PostService {
 
     postTagService.createPostTag(post, tags);
 
+  }
+
+  public List<PostResponse> getAllDraftPosts() {
+    List<Post> posts = postRepository.findByIsPublishedFalseOrderByCreatedAtDesc();
+    return convertPostResponse(posts);
   }
 
 }

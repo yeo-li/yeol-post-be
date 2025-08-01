@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.post_tag;
 
 import com.yeo_li.yeol_post.common.entity.BaseTimeEntity;
-import com.yeo_li.yeol_post.post.Post;
+import com.yeo_li.yeol_post.post.domain.Post;
 import com.yeo_li.yeol_post.tag.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
