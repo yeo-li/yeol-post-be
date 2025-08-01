@@ -39,7 +39,7 @@ public class Post extends BaseTimeEntity {
 
   private String summary;
 
-  @Column(nullable = false)
+  // @Column(nullable = false)
   private String author;
 
   @Column(name = "published_at")

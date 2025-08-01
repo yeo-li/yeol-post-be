@@ -26,7 +26,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
       value =
           "SELECT p.* " +
               "FROM post p WHERE p.is_published = :isPublished " +
-              "ORDER BY p.created_at DESC " +
+              "ORDER BY p.published_at DESC " +
               "LIMIT :postCnt",
       nativeQuery = true
   )
@@ -51,7 +51,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
   List<Post> findByIsPublishedTrueOrderByPublishedAtDesc();
 
-  List<Post> findByIsPublishedFalseOrderByPublishedAtDesc();
+  List<Post> findByIsPublishedFalseOrderByCreatedAtDesc();
 
 
 }

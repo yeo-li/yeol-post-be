@@ -170,7 +170,7 @@ public class PostService {
   }
 
   public List<PostResponse> getAllDraftPosts() {
-    List<Post> posts = postRepository.findByIsPublishedFalseOrderByPublishedAtDesc();
+    List<Post> posts = postRepository.findByIsPublishedFalseOrderByCreatedAtDesc();
     return convertPostResponse(posts);
   }
 

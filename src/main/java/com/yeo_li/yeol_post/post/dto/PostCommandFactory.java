@@ -4,6 +4,7 @@ import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.admin.repository.AdminRepository;
 import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryRepository;
+import com.yeo_li.yeol_post.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.tag.TagRepository;
 import java.time.LocalDateTime;
@@ -40,6 +41,32 @@ public class PostCommandFactory {
         request.content(),
         isPublished,
         publishedAt,
+        admin,
+        category,
+        request.tags(),
+        isDeleted
+    );
+  }
+
+  public DraftPostCreateCommand createDraftPostCommand(PostCreateRequest request) {
+    Boolean isPublished = false;
+
+    Admin admin = adminRepository.findById(request.adminId())
+        .orElseThrow(() -> new IllegalArgumentException(
+            "PostCommandFactory:createPostCommand: Admin의 Id가 올바르지 않습니다."));
+
+    Category category = categoryRepository.findById(request.categoryId())
+        .orElseGet(null);
+
+    Boolean isDeleted = false;
+
+    return new DraftPostCreateCommand(
+        request.title(),
+        request.summary(),
+        request.author(),
+        request.content(),
+        isPublished,
+        null,
         admin,
         category,
         request.tags(),
