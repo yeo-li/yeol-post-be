@@ -26,6 +26,12 @@ public class Category extends BaseTimeEntity {
   @Column(nullable = false, name = "category_name")
   private String categoryName;
 
+  @Column(name = "category_color")
+  private String categoryColor;
+
+  @Column(name = "category_description")
+  private String categoryDescription;
+
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Post> posts = new ArrayList<>();
 }

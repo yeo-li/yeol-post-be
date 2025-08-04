@@ -124,8 +124,13 @@ public class PostService {
           post.getContent(),
           post.getIsPublished(),
           post.getPublishedAt(),
-          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
-              postRepositoryFacade.countPostByCategory(post.getCategory())),
+          CategoryResponse.builder()
+              .categoryId(post.getCategory().getId())
+              .categoryName(post.getCategory().getCategoryName())
+              .categoryColor(post.getCategory().getCategoryColor())
+              .categoryDescription(post.getCategory().getCategoryColor())
+              .postCount(postRepositoryFacade.countPostByCategory(post.getCategory()))
+              .build(),
           tagNames
       ));
     }
