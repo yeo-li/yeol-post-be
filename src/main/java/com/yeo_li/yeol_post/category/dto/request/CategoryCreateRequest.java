@@ -6,10 +6,15 @@ import jakarta.validation.constraints.NotBlank;
 
 public record CategoryCreateRequest(
     @JsonProperty("category_name") @NotBlank
-    String categoryName
+    String categoryName,
+    @JsonProperty("category_color")
+    String categoryColor,
+    @JsonProperty("category_description")
+    String categoryDescription
+
 ) {
 
   public CategoryCreateCommand toCommand() {
-    return new CategoryCreateCommand(categoryName);
+    return new CategoryCreateCommand(categoryName, categoryColor, categoryDescription);
   }
 }

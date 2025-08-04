@@ -36,11 +36,17 @@ public class CategoryService {
 
     List<CategoryResponse> categoryResponses = new ArrayList<>();
     for (Category category : categories) {
-      if (postRepositoryFacade.countPostByCategory(category) == 0) {
-        continue;
-      }
-      categoryResponses.add(new CategoryResponse(category.getId(), category.getCategoryName(),
-          postRepositoryFacade.countPostByCategory(category)));
+      int postCnt = postRepositoryFacade.countPostByCategory(category);
+//      if (postCnt == 0) {
+//        continue;
+//      }
+      categoryResponses.add(CategoryResponse.builder()
+          .categoryId(category.getId())
+          .categoryName(category.getCategoryName())
+          .categoryDescription(category.getCategoryDescription())
+          .categoryColor(category.getCategoryColor())
+          .postCount(postCnt)
+          .build());
     }
 
     return categoryResponses;
@@ -74,7 +80,16 @@ public class CategoryService {
       throw new CategoryException(CategoryExceptionType.CATEGORY_NOT_FOUND);
     }
 
-    category.setCategoryName(request.newCategoryName());
+    if (request.categoryName() != null) {
+      category.setCategoryName(request.categoryName());
+    }
+    if (request.categoryColor() != null) {
+      category.setCategoryColor(request.categoryColor());
+    }
+    if (request.categoryDescription() != null) {
+      category.setCategoryDescription(request.categoryDescription());
+    }
+
   }
 
   public List<CategoryRecentResponse> getAllCategoryRecentPost() {
@@ -95,14 +110,20 @@ public class CategoryService {
           post.getContent(),
           post.getIsPublished(),
           post.getPublishedAt(),
-          new CategoryResponse(post.getCategory().getId(), post.getCategory().getCategoryName(),
-              postRepositoryFacade.countPostByCategory(post.getCategory())),
+          CategoryResponse.builder()
+              .categoryId(post.getCategory().getId())
+              .categoryName(post.getCategory().getCategoryName())
+              .categoryColor(post.getCategory().getCategoryColor())
+              .categoryDescription(post.getCategory().getCategoryColor())
+              .postCount(postRepositoryFacade.countPostByCategory(post.getCategory()))
+              .build(),
           toTagNames(post.getPostTags())
       );
       categoryRecentResponses.add(CategoryRecentResponse.builder()
           .categoryId(category.getId())
           .categoryName(category.getCategoryName())
-          .description("testtest")
+          .description(category.getCategoryDescription())
+          .categoryColor(category.getCategoryColor())
           .postCount(postResponse.category().postCount())
           .post(postResponse)
           .build());

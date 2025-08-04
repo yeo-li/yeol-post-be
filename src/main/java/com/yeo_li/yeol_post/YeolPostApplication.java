@@ -13,7 +13,7 @@ public class YeolPostApplication {
   }
 
   // TODO: 임시 저장 기능 구현 -> 구현
-  // TODO: 카테고리 추가 기능 구현
+  // TODO: 카테고리 추가 기능 구현 -> 색상, 카테고리 설명 추가 및 반환
   // TODO: 설정 기능 구현
   // TODO: 소개 작성 기능 구현 -> 관리자 탭에서 구현
   // TODO: 페이지네이션 구현
