@@ -32,11 +32,14 @@ jobs:
       - name: Gradle 빌드 및 테스트
         run: ./gradlew clean build --no-daemon -x test
 
+      - name: Rename built JAR to app.jar
+        run: mv build/libs/*.jar build/libs/app.jar
+
       - name: 빌드 결과 업로드
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
-          path: build/libs/*.jar
+          path: build/libs/app.jar
 
   deploy:
     name: Deploy to Server
