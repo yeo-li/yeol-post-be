@@ -1,8 +1,8 @@
 package com.yeo_li.yeol_post.post.command;
 
-import com.yeo_li.yeol_post.admin.Admin;
+import com.yeo_li.yeol_post.admin.domain.Admin;
 import com.yeo_li.yeol_post.category.Category;
-import com.yeo_li.yeol_post.post.Post;
+import com.yeo_li.yeol_post.post.domain.Post;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -14,8 +14,6 @@ public record PostCreateCommand(
     String summary, // 있음
     String author, // 있음
     String content, // 있음
-    @NotNull
-    LocalDateTime updatedAt, // Fact -
     @NotNull
     Boolean isPublished, // Fact -
     LocalDateTime publishedAt, // Fact -
@@ -36,7 +34,6 @@ public record PostCreateCommand(
     post.setSummary(this.summary);
     post.setAuthor(this.author);
     post.setContent(this.content);
-    post.setUpdatedAt(this.updatedAt);
     post.setPublishedAt(this.publishedAt);
     post.setIsPublished(this.isPublished);
     post.setIsDeleted(this.isDeleted);
