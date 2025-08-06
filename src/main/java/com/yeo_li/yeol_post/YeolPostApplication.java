@@ -8,17 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableJpaAuditing
 public class YeolPostApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(YeolPostApplication.class, args);
-  }
-
-  // TODO: 임시 저장 기능 구현 -> 구현
-  // TODO: 카테고리 추가 기능 구현 -> 색상, 카테고리 설명 추가 및 반환
-  // TODO: 설정 기능 구현
-  // TODO: 소개 작성 기능 구현 -> 관리자 탭에서 구현
-  // TODO: 페이지네이션 구현
-  // TODO: 게시물 사진 첨구 기능 구현
-  // TODO: 로그인 보안 강화
-  // TODO: 관리자 전용 게시물 기능 구현
+    public static void main(String[] args) {
+        SpringApplication.run(YeolPostApplication.class, args);
+    }
 
 }
