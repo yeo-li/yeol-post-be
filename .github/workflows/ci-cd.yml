@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-jar # 이게 아마 디렉토리, yeol-post-0.0.1-SNAPSHOT, yeol-post-0.0.1-SNAPSHOT-plain
-          path: build/libs/*.jar
+          path: build/libs/yeol-post-0.0.1-SNAPSHOT.jar
 
   deploy:
     name: Deploy to Server
@@ -60,6 +60,13 @@ jobs:
         with:
           name: app-jar
           path: deploy/
+
+      - name: snapshot JAR to app.jar
+        run: |
+          cd deploy
+          SRC=$(ls *.jar | sort |tail -n1)
+          mv "$SRC" app.jar
+
 
       - name: Debug list deploy directory
         run: ls -l deploy/
