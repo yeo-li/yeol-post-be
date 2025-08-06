@@ -5,7 +5,7 @@ name: Backend CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-test:
@@ -42,7 +42,7 @@ jobs:
     name: Deploy to Server
     needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     steps:
       - name: Checkout 코드
         uses: actions/checkout@v3
