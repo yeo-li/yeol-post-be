@@ -1,7 +1,6 @@
 name: Backend CI/CD Pipeline
 
 # main 브랜치에 push 또는 PR이 merge 될 때 실행
-# 언제 실행할지?
 on:
   push:
     branches:
