@@ -32,15 +32,11 @@ jobs:
       - name: Gradle 빌드 및 테스트
         run: ./gradlew clean build --no-daemon -x test
 
-      - name: Rename JAR to app.jar
-        run: |
-          mv build/libs/*.jar build/libs/app.jar
-
       - name: 빌드 결과 업로드
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
-          path: build/libs/app.jar
+          path: build/libs/*.jar
 
   deploy:
     name: Deploy to Server
@@ -62,14 +58,10 @@ jobs:
           name: app-jar
           path: ./deploy
 
-      - name:
-          Debug: list deploy directory
-        run: ls -l deploy/
-
       - name: 서버에 JAR 전송
         run: |
           scp -o StrictHostKeyChecking=no \
-            deploy/app.jar \
+            deploy/*.jar \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/app/app.jar
 
       - name: 원격에서 서비스 재시작
