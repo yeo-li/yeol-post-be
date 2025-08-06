@@ -5,7 +5,6 @@ import com.yeo_li.yeol_post.admin.dto.AdminPasswordUpdateRequest;
 import com.yeo_li.yeol_post.admin.dto.AdminUpdateRequest;
 import com.yeo_li.yeol_post.auth.AuthorizationService;
 import com.yeo_li.yeol_post.common.response.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,67 +23,66 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminController {
 
-  private final AuthorizationService authorizationService;
-  private final AdminService adminService;
+    private final AuthorizationService authorizationService;
+    private final AdminService adminService;
 
-  @GetMapping("/me")
-  public ResponseEntity<?> getCurrentAdmin(@AuthenticationPrincipal OAuth2User principal,
-      HttpServletRequest request) {
-    if (principal == null) {
-      return ResponseEntity
-          .status(HttpStatus.OK)
-          .body(Map.of(
-              "isLoggedIn", false
-          ));
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentAdmin(@AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(Map.of(
+                    "isLoggedIn", false
+                ));
+        }
+
+        Map<String, Object> attributes = principal.getAttributes();
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+        String nickname = (String) profile.get("nickname");
+
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+
+        Admin admin = adminService.findAdminByKakaoId(String.valueOf(attributes.get("id")));
+
+        return ResponseEntity.ok(Map.of(
+            "nickname", nickname,
+            "admin_id", admin.getId(),
+            "isLoggedIn", true
+        ));
     }
 
-    Map<String, Object> attributes = principal.getAttributes();
-    Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-    Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-    String nickname = (String) profile.get("nickname");
+    @PatchMapping("/{adminId}")
+    public ResponseEntity<ApiResponse<Object>> updateAdmin(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long adminId,
+        @RequestBody AdminUpdateRequest request) {
 
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        // 인증, 인가 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    Admin admin = adminService.findAdminByKakaoId(String.valueOf(attributes.get("id")));
+        adminService.updateAdmin(adminId, request);
 
-    return ResponseEntity.ok(Map.of(
-        "nickname", nickname,
-        "admin_id", admin.getId(),
-        "isLoggedIn", true
-    ));
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess());
+    }
 
-  @PatchMapping("/{adminId}")
-  public ResponseEntity<ApiResponse<Object>> updateAdmin(
-      @AuthenticationPrincipal OAuth2User principal,
-      @PathVariable Long adminId,
-      @RequestBody AdminUpdateRequest request) {
+    @PatchMapping("/{adminId}/password")
+    public ResponseEntity<ApiResponse<Object>> updatePassword(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long adminId,
+        @RequestBody AdminPasswordUpdateRequest request) {
 
-    // 인증, 인가 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        // 인증, 인가 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    adminService.updateAdmin(adminId, request);
+        adminService.updateAdminPassword(adminId, request);
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess());
-  }
-
-  @PatchMapping("/{adminId}/password")
-  public ResponseEntity<ApiResponse<Object>> updatePassword(
-      @AuthenticationPrincipal OAuth2User principal,
-      @PathVariable Long adminId,
-      @RequestBody AdminPasswordUpdateRequest request) {
-
-    // 인증, 인가 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
-
-    adminService.updateAdminPassword(adminId, request);
-
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess());
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess());
+    }
 }
