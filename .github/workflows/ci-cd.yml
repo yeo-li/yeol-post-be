@@ -33,7 +33,7 @@ jobs:
         run: ./gradlew clean build --no-daemon
 
       - name: 빌드 결과 업로드
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-jar
           path: build/libs/*.jar
@@ -53,7 +53,7 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: 아티팩트 다운로드
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: app-jar
           path: ./deploy
