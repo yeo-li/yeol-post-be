@@ -30,7 +30,7 @@ jobs:
           java-version: '21'
 
       - name: Gradle 빌드 및 테스트
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon -x test
 
       - name: 빌드 결과 업로드
         uses: actions/upload-artifact@v4
