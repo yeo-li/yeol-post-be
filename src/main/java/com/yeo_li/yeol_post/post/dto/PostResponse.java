@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.post.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,6 +36,7 @@ public record PostResponse(
     Boolean isPublished,
 
     @Schema(description = "발행일 및 시간", example = "2025-07-22 13:51:35.513454")
+    @JsonFormat(timezone = "Asia/Seoul")
     @JsonProperty("published_at")
     LocalDateTime publishedAt,
 

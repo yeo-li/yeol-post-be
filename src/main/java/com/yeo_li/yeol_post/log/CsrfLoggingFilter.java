@@ -12,32 +12,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class CsrfLoggingFilter extends OncePerRequestFilter {
 
-  @Override
-  protected void doFilterInternal(HttpServletRequest request,
-      HttpServletResponse response,
-      FilterChain filterChain)
-      throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain filterChain)
+        throws ServletException, IOException {
 
-    String method = request.getMethod();
-    String csrfHeader = request.getHeader("X-XSRF-TOKEN");
-    Cookie[] cookies = request.getCookies();
-    String csrfCookie = null;
+        String method = request.getMethod();
+        String csrfHeader = request.getHeader("X-XSRF-TOKEN");
+        Cookie[] cookies = request.getCookies();
+        String csrfCookie = null;
 
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if ("XSRF-TOKEN".equals(cookie.getName())) {
-          csrfCookie = cookie.getValue();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("XSRF-TOKEN".equals(cookie.getName())) {
+                    csrfCookie = cookie.getValue();
+                }
+            }
         }
-      }
-    }
 
-    if (!"GET".equalsIgnoreCase(method)) {
-      System.out.println("🔒 CSRF 요청 로그");
-      System.out.println("요청 Method: " + method);
-      System.out.println("X-XSRF-TOKEN (헤더): " + csrfHeader);
-      System.out.println("XSRF-TOKEN (쿠키): " + csrfCookie);
+        filterChain.doFilter(request, response);
     }
-
-    filterChain.doFilter(request, response);
-  }
 }
