@@ -35,7 +35,7 @@ jobs:
       - name: 빌드 결과 업로드
         uses: actions/upload-artifact@v4
         with:
-          name: app-jar
+          name: app-jar # 이게 아마 디렉토리, yeol-post-0.0.1-SNAPSHOT, yeol-post-0.0.1-SNAPSHOT-plain
           path: build/libs/*.jar
 
   deploy:
@@ -68,7 +68,7 @@ jobs:
         run: |
           scp -o StrictHostKeyChecking=no \
             deploy/*.jar \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/app/app.jar
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/app/
 
       - name: 원격에서 서비스 재시작
         run: |
