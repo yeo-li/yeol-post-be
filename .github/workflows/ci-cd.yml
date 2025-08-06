@@ -34,7 +34,7 @@ jobs:
 
       - name: Rename versioned JAR to app.jar
         run: |
-          mv build/libs/yeol-post-*.jar build/libs/app.jar
+          mv build/libs/*.jar build/libs/app.jar
 
       - name: 빌드 결과 업로드
         uses: actions/upload-artifact@v4
