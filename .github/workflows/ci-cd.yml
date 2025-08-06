@@ -64,7 +64,7 @@ jobs:
       - name: 서버에 JAR 전송
         run: |
           scp -o StrictHostKeyChecking=no \
-            deploy/build/libs/*.jar \
+            deploy/*.jar \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/app/app.jar
 
       - name: 원격에서 서비스 재시작
