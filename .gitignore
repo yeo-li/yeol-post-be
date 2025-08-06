@@ -33,7 +33,7 @@ Thumbs.db
 .env
 *.env
 application.yml
-application-*.properties
+application-*.yml
 
 # 테스트 리포트
 /test-output/
