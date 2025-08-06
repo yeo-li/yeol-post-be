@@ -10,7 +10,7 @@
 # 의존성 캐시
 .gradle/
 .mvn/
-!gradle/wrapper/gradle-wrapper.jar
+# !gradle/wrapper/gradle-wrapper.jar
 
 # IDE 설정 파일
 *.iml
@@ -48,7 +48,7 @@ desktop.ini
 *.ipr
 
 # 빌드 결과물
-*.jar
+# *.jar
 *.war
 
 # 자바 컴파일
