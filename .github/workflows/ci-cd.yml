@@ -52,11 +52,14 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
+      - name: Create deploy directory
+        run: mkdir -p deploy
+
       - name: 아티팩트 다운로드
         uses: actions/download-artifact@v4
         with:
           name: app-jar
-          path: ./deploy
+          path: deploy/
 
       - name: Debug list deploy directory
         run: ls -l deploy/
