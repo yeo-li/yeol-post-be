@@ -67,9 +67,17 @@ jobs:
           SRC=$(ls *.jar | sort |tail -n1)
           mv "$SRC" app.jar
 
+      - name: 원격에서 서비스 중단
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "sudo systemctl stop ${{ secrets.SERVICE_NAME }}"
 
-      - name: Debug list deploy directory
-        run: ls -l deploy/
+      - name: 원격에 이전 app.jar 삭제
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd /home/${{ secrets.SSH_USER }}/app && sudo rm -f app.jar"
 
       - name: 서버에 JAR 전송
         run: |
