@@ -62,8 +62,7 @@ jobs:
         run: |
           mv deploy/build/libs/app.jar deploy/app.jar
 
-      - name:
-          Debug: list deploy directory
+      - name: Debug list deploy directory
         run: ls -l deploy/
 
       - name: 서버에 JAR 전송
