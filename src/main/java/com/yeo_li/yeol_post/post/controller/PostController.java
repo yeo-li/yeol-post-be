@@ -71,7 +71,7 @@ public class PostController {
     })
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByQueryString(
-        @RequestParam Map<String, String> params) {
+        @RequestParam(required = false) Map<String, String> params) {
         // TODO: sibal refactoring
         List<PostResponse> postResponses = new ArrayList<>();
         if (params.isEmpty()) {

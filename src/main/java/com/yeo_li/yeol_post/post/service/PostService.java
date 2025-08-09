@@ -124,6 +124,7 @@ public class PostService {
                 post.getSummary(),
                 post.getAuthor(),
                 post.getContent(),
+                post.getViews(),
                 post.getIsPublished(),
                 post.getPublishedAt(),
                 CategoryResponse.builder()
