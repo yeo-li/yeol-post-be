@@ -30,6 +30,10 @@ public record PostResponse(
     @NotBlank
     String content,
 
+    @Schema(description = "게시물 조회수", example = "34")
+    @NotNull
+    Long views,
+
     @NotNull
     @JsonProperty("is_published")
     @Schema(description = "게시 여부", example = "true")
