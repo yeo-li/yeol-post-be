@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/v1_0/001-init-database.yaml
+  - include:
+      file: db/changelog/v1_0/002-add-views-column-to-post.yaml

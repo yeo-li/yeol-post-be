@@ -26,39 +26,41 @@ import lombok.Setter;
 @Setter
 public class Post extends BaseTimeEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @Column(nullable = false)
-  private String title;
+    @Column(nullable = false)
+    private String title;
 
-  @Lob
-  @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
-  private String content;
+    @Lob
+    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+    private String content;
 
-  private String summary;
+    private String summary;
 
-  // @Column(nullable = false)
-  private String author;
+    private Long views = 0L;
 
-  @Column(name = "published_at")
-  private LocalDateTime publishedAt;
+    // @Column(nullable = false)
+    private String author;
 
-  @Column(nullable = false, columnDefinition = "boolean default false")
-  private Boolean isPublished;
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
 
-  @Column(nullable = false, columnDefinition = "boolean default false")
-  private Boolean isDeleted;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isPublished;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "admin_id")
-  private Admin admin;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean isDeleted;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "category_id")
-  private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id")
+    private Admin admin;
 
-  @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<PostTag> postTags = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostTag> postTags = new ArrayList<>();
 }
