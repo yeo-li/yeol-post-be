@@ -1,0 +1,269 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-admin
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: admin
+      changes:
+        - createTable:
+            tableName: admin
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column:
+                  name: kakao_id
+                  type: VARCHAR(255)
+                  constraints: { nullable: false, unique: true }
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints: { nullable: false }
+              - column:
+                  name: nickname
+                  type: VARCHAR(10)
+                  constraints: { nullable: false }
+              - column:
+                  name: password
+                  type: VARCHAR(20)
+                  constraints: { nullable: false }
+              - column:
+                  name: username
+                  type: VARCHAR(20)
+                  constraints: { nullable: false, unique: true }
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+
+  - changeSet:
+      id: 002-create-category
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: category
+      changes:
+        - createTable:
+            tableName: category
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: category_name
+                  type: VARCHAR(255)
+                  constraints: { nullable: false }
+              - column: { name: category_color, type: VARCHAR(255) }
+              - column: { name: category_description, type: VARCHAR(255) }
+
+  - changeSet:
+      id: 003-create-tag
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: tag
+      changes:
+        - createTable:
+            tableName: tag
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: tag_name
+                  type: VARCHAR(255)
+                  constraints: { nullable: false }
+
+  - changeSet:
+      id: 004-create-post
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: post
+      changes:
+        - createTable:
+            tableName: post
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: author
+                  type: VARCHAR(255)
+                  constraints: { nullable: false }
+              - column:
+                  name: content
+                  type: MEDIUMTEXT
+                  constraints: { nullable: false }
+              - column:
+                  name: summary
+                  type: VARCHAR(255)
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints: { nullable: false }
+              - column: { name: published_at, type: DATETIME(6) }
+              - column:
+                  name: is_published
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column:
+                  name: is_deleted
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints: { nullable: false }
+              - column: { name: admin_id, type: BIGINT }
+              - column: { name: category_id, type: BIGINT }
+
+  - changeSet:
+      id: 005-create-post_tag
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: post_tag
+      changes:
+        - createTable:
+            tableName: post_tag
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints: { nullable: false }
+              - column:
+                  name: tag_id
+                  type: BIGINT
+                  constraints: { nullable: false }
+
+  - changeSet:
+      id: 006-indexes
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: admin }
+          - tableExists: { tableName: category }
+          - tableExists: { tableName: tag }
+          - tableExists: { tableName: post }
+          - tableExists: { tableName: post_tag }
+      changes:
+        - createIndex:
+            tableName: post
+            indexName: idx_post_category_id
+            columns:
+              - column: { name: category_id }
+        - createIndex:
+            tableName: post
+            indexName: idx_post_admin_id
+            columns:
+              - column: { name: admin_id }
+        - createIndex:
+            tableName: post_tag
+            indexName: idx_post_tag_post_id
+            columns:
+              - column: { name: post_id }
+        - createIndex:
+            tableName: post_tag
+            indexName: idx_post_tag_tag_id
+            columns:
+              - column: { name: tag_id }
+
+  - changeSet:
+      id: 007-fks
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: admin }
+          - tableExists: { tableName: category }
+          - tableExists: { tableName: tag }
+          - tableExists: { tableName: post }
+          - tableExists: { tableName: post_tag }
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: post
+            baseColumnNames: category_id
+            referencedTableName: category
+            referencedColumnNames: id
+            constraintName: fk_post_category
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: post
+            baseColumnNames: admin_id
+            referencedTableName: admin
+            referencedColumnNames: id
+            constraintName: fk_post_admin
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: post_tag
+            baseColumnNames: post_id
+            referencedTableName: post
+            referencedColumnNames: id
+            constraintName: fk_post_tag_post
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: post_tag
+            baseColumnNames: tag_id
+            referencedTableName: tag
+            referencedColumnNames: id
+            constraintName: fk_post_tag_tag
+            onDelete: RESTRICT
+            onUpdate: RESTRICT

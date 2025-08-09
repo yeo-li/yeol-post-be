@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-add-views-column-to-post
+      author: yeoli
+      changes:
+        - addColumn:
+            tableName: post
+            columns:
+              - column:
+                  name: views
+                  type: bigint
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
