@@ -4,18 +4,22 @@ import com.yeo_li.yeol_post.category.Category;
 import com.yeo_li.yeol_post.category.CategoryService;
 import com.yeo_li.yeol_post.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.common.response.code.resultCode.ErrorStatus;
+import com.yeo_li.yeol_post.common.response.exception.GeneralException;
 import com.yeo_li.yeol_post.common.response.handler.PostHandler;
 import com.yeo_li.yeol_post.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.post.domain.Post;
 import com.yeo_li.yeol_post.post.dto.PostResponse;
 import com.yeo_li.yeol_post.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.post.exception.PostExceptionType;
 import com.yeo_li.yeol_post.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.post.repository.PostRepository;
 import com.yeo_li.yeol_post.post_tag.PostTag;
 import com.yeo_li.yeol_post.post_tag.PostTagService;
+import com.yeo_li.yeol_post.streak.service.StreakService;
 import com.yeo_li.yeol_post.tag.Tag;
 import com.yeo_li.yeol_post.tag.TagService;
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +35,13 @@ public class PostService {
     private final PostTagService postTagService;
     private final CategoryService categoryService;
     private final PostRepositoryFacade postRepositoryFacade;
+    private final StreakService streakService;
 
-    public Long createPost(PostCreateCommand command) {
+    public void createPost(PostCreateCommand command) {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
         Post post = postRepository.save(command.toEntity());
         postTagService.createPostTag(post, tags);
-
-        return post.getId();
+        streakService.addStreakCount(LocalDateTime.now());
     }
 
     public List<PostResponse> getAllPosts() {
@@ -141,8 +145,13 @@ public class PostService {
         return postResponses;
     }
 
-    public void deletePostByPostId(int postId) {
+    public void deletePostByPostId(Long postId) {
+        Post post = postRepository.findPostById(postId);
+        if (post == null) {
+            throw new GeneralException(PostExceptionType.POST_NOT_FOUND);
+        }
         postRepository.deleteById(postId);
+        streakService.removeStreakCount(post);
     }
 
     @Transactional
