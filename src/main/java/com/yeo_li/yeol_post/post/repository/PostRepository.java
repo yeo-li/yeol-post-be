@@ -9,49 +9,49 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Integer> {
+public interface PostRepository extends JpaRepository<Post, Long> {
 
-  Post findPostById(Long id);
+    Post findPostById(Long id);
 
-  @Query("SELECT p FROM Post p where LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
-  List<Post> searchPostByTitle(@Param("keyword") String keyword);
+    @Query("SELECT p FROM Post p where LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
+    List<Post> searchPostByTitle(@Param("keyword") String keyword);
 
-  @Query("select p from Post p where p.category = :category ORDER BY p.createdAt DESC")
-  List<Post> findPostsByCategory(@Param("category") Category category);
+    @Query("select p from Post p where p.category = :category ORDER BY p.createdAt DESC")
+    List<Post> findPostsByCategory(@Param("category") Category category);
 
 //  @Query("SELECT p FROM Post p where LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%')) AND p.isPublished = true")
 //  List<Post> findPostsByAuthor(@Param("keyword") String keyword);
 
-  @Query(
-      value =
-          "SELECT p.* " +
-              "FROM post p WHERE p.is_published = :isPublished " +
-              "ORDER BY p.published_at DESC " +
-              "LIMIT :postCnt",
-      nativeQuery = true
-  )
-  List<Post> findLatestPostsNative(@Param("postCnt") int postCnt,
-      @Param("isPublished") boolean isPublished);
+    @Query(
+        value =
+            "SELECT p.* " +
+                "FROM post p WHERE p.is_published = :isPublished " +
+                "ORDER BY p.published_at DESC " +
+                "LIMIT :postCnt",
+        nativeQuery = true
+    )
+    List<Post> findLatestPostsNative(@Param("postCnt") int postCnt,
+        @Param("isPublished") boolean isPublished);
 
 
-  @Query(
-      value =
-          "SELECT p.* " +
-              "FROM post p " +
-              "ORDER BY p.published_at DESC ",
-      nativeQuery = true
-  )
-  List<Post> findAllPosts();
+    @Query(
+        value =
+            "SELECT p.* " +
+                "FROM post p " +
+                "ORDER BY p.published_at DESC ",
+        nativeQuery = true
+    )
+    List<Post> findAllPosts();
 
-  List<Post> findPostsByCategoryAndIsPublishedTrueOrderByPublishedAtDesc(Category category);
+    List<Post> findPostsByCategoryAndIsPublishedTrueOrderByPublishedAtDesc(Category category);
 
-  List<Post> searchPostByTitleAndIsPublishedTrueOrderByPublishedAtDesc(String title);
+    List<Post> searchPostByTitleAndIsPublishedTrueOrderByPublishedAtDesc(String title);
 
-  List<Post> findPostsByAuthorAndIsPublishedTrueOrderByIsPublishedDesc(String author);
+    List<Post> findPostsByAuthorAndIsPublishedTrueOrderByIsPublishedDesc(String author);
 
-  List<Post> findByIsPublishedTrueOrderByPublishedAtDesc();
+    List<Post> findByIsPublishedTrueOrderByPublishedAtDesc();
 
-  List<Post> findByIsPublishedFalseOrderByCreatedAtDesc();
+    List<Post> findByIsPublishedFalseOrderByCreatedAtDesc();
 
 
 }
