@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class StreakStatusRepositoryFacade {
 
     private final StreakStatusRepository streakStatusRepository;
-    
+
     public StreakStatus findLatest() {
-        return streakStatusRepository.findLatest();
+        return streakStatusRepository.findTopByOrderByIdDesc();
     }
 }
