@@ -18,4 +18,12 @@ public class StreakStatusRepositoryFacade {
     public StreakStatus findLatest() {
         return streakStatusRepository.findTopByOrderByIdDesc();
     }
+
+    public void save(StreakStatus streakStatus) {
+        streakStatusRepository.save(streakStatus);
+    }
+
+    public void delete(StreakStatus streakStatus) {
+        streakStatusRepository.delete(streakStatus);
+    }
 }
