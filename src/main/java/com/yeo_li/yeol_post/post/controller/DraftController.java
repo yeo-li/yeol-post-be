@@ -32,75 +32,75 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Draft", description = "임시저장 게시물 관련 API")
 public class DraftController {
 
-  private final AuthorizationService authorizationService;
-  private final PostService postService;
-  private final DraftPostService draftPostService;
+    private final AuthorizationService authorizationService;
+    private final PostService postService;
+    private final DraftPostService draftPostService;
 
-  private final PostCommandFactory postCommandFactory;
+    private final PostCommandFactory postCommandFactory;
 
-  @GetMapping
-  public ResponseEntity<ApiResponse<List<PostResponse>>> getDrafts(
-      @AuthenticationPrincipal OAuth2User principal) {
-    // 인가 사용자인지 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getDrafts(
+        @AuthenticationPrincipal OAuth2User principal) {
+        // 인가 사용자인지 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    List<PostResponse> posts = postService.getAllDraftPosts();
+        List<PostResponse> posts = postService.getAllDraftPosts();
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess(posts));
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess(posts));
+    }
 
-  @PostMapping
-  public ResponseEntity<ApiResponse<DraftPostCreateResponse>> savePost(
-      @AuthenticationPrincipal OAuth2User principal,
-      @RequestBody @Valid PostCreateRequest request) {
-    // 인가 사용자인지 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    @PostMapping
+    public ResponseEntity<ApiResponse<DraftPostCreateResponse>> savePost(
+        @AuthenticationPrincipal OAuth2User principal,
+        @RequestBody @Valid PostCreateRequest request) {
+        // 인가 사용자인지 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    Long postId = draftPostService.createDraftPost(
-        postCommandFactory.createDraftPostCommand(request));
+        Long postId = draftPostService.createDraftPost(
+            postCommandFactory.createDraftPostCommand(request));
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess(DraftPostCreateResponse.builder()
-            .postId(postId)
-            .build()
-        ));
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess(DraftPostCreateResponse.builder()
+                .postId(postId)
+                .build()
+            ));
+    }
 
-  @PatchMapping("/{postId}")
-  public ResponseEntity<?> updateDraftPost(
-      @AuthenticationPrincipal OAuth2User principal,
-      @PathVariable("postId") Long postId,
-      @RequestBody PostUpdateRequest request) {
+    @PatchMapping("/{postId}")
+    public ResponseEntity<?> updateDraftPost(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable("postId") Long postId,
+        @RequestBody PostUpdateRequest request) {
 
-    // 인가 사용자인지 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        // 인가 사용자인지 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    draftPostService.updateDraftPost(postId, request);
+        draftPostService.updateDraftPost(postId, request);
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess());
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess());
+    }
 
-  @PostMapping("/{postId}/publish")
-  public ResponseEntity<ApiResponse<Void>> publishPost(
-      @AuthenticationPrincipal OAuth2User principal,
-      @PathVariable Long postId) {
-    // 인가 사용자인지 검증
-    Map<String, Object> attributes = principal.getAttributes();
-    authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+    @PostMapping("/{postId}/publish")
+    public ResponseEntity<ApiResponse<Void>> publishPost(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long postId) {
+        // 인가 사용자인지 검증
+        Map<String, Object> attributes = principal.getAttributes();
+        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
 
-    draftPostService.publishPost(postId);
+        draftPostService.publishPost(postId);
 
-    return ResponseEntity
-        .status(HttpStatus.OK)
-        .body(ApiResponse.onSuccess());
-  }
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(ApiResponse.onSuccess());
+    }
 
 }

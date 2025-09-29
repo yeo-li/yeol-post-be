@@ -3,3 +3,7 @@ databaseChangeLog:
       file: db/changelog/v1_0/001-init-database.yaml
   - include:
       file: db/changelog/v1_0/002-add-views-column-to-post.yaml
+  - include:
+      file: db/changelog/v1_0/003-create-streak-tables.yaml
+  - include:
+      file: db/changelog/v1_0/004-add-year-week-to-streak-status.yaml
