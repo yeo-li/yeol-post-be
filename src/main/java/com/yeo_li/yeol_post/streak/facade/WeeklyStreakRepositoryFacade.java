@@ -20,4 +20,8 @@ public class WeeklyStreakRepositoryFacade {
     public WeeklyStreak findWeeklyStreakByDateTime(LocalDateTime date) {
         return weeklyStreakRepository.findByDateWithinRange(date);
     }
+
+    public void save(WeeklyStreak weeklyStreak) {
+        weeklyStreakRepository.save(weeklyStreak);
+    }
 }
