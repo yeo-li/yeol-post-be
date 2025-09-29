@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-year-week-to-streak-status
+      author: yeoli
+      changes:
+        - addColumn:
+            tableName: streak_status
+            columns:
+              - column:
+                  name: year
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: week_number
+                  type: INT
+                  constraints:
+                    nullable: false
