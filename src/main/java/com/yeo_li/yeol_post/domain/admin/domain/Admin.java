@@ -1,0 +1,54 @@
+package com.yeo_li.yeol_post.domain.admin.domain;
+
+import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
+import com.yeo_li.yeol_post.domain.post.domain.Post;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+public class Admin extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, name = "kakao_id", unique = true)
+    private String kakaoId;
+
+    @NotNull
+    private String name;
+
+    @NotNull
+    @Column(length = 10)
+    private String nickname;
+
+    @NotNull
+    @Column(length = 20, unique = true)
+    private String username;
+
+    @Email
+    private String email;
+
+    @NotNull
+    @Column(length = 20)
+    private String password;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isDeleted;
+
+    @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
+}
