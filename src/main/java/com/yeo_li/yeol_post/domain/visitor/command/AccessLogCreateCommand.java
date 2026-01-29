@@ -7,11 +7,9 @@ import java.util.UUID;
 public record AccessLogCreateCommand(
     @NotNull UUID visitorId,
     @NotNull String visitorHash,
-    String requestUrl,
     String referer,
     String osType,
     String browserType,
-    String method,
     String pageUrl
 ) {
 
@@ -19,11 +17,9 @@ public record AccessLogCreateCommand(
         AccessLog accessLog = new AccessLog();
         accessLog.setVisitorId(visitorId);
         accessLog.setVisitorHash(visitorHash);
-        accessLog.setRequestUrl(requestUrl);
         accessLog.setReferer(referer);
         accessLog.setOsType(osType);
         accessLog.setBrowserType(browserType);
-        accessLog.setMethod(method);
         accessLog.setPageUrl(pageUrl);
 
         return accessLog;

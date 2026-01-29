@@ -31,8 +31,6 @@ public class AccessLog extends BaseTimeEntity {
     @Nullable
     private String visitorHash;
 
-    @Nullable
-    private String requestUrl;
 
     @Nullable
     private String referer;
@@ -43,8 +41,6 @@ public class AccessLog extends BaseTimeEntity {
     @Nullable
     private String browserType;
 
-    @Nullable
-    private String method;
 
     @Nullable
     private String pageUrl;

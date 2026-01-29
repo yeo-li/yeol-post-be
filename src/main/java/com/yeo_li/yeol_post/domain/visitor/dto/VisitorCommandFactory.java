@@ -29,10 +29,7 @@ public class VisitorCommandFactory {
         String ip = ClientIpExtractor.extract(request, trustForwardedHeader);
         String visitorHash = buildVisitorHash(ip, userAgent);
 
-        String requestUrl =
-            request.getRequestURL() != null ? request.getRequestURL().toString() : null;
         String referer = request.getHeader("Referer");
-        String method = request.getMethod();
 
         String osType = extractOsType(userAgent);
         String browserType = extractBrowserType(userAgent);
@@ -40,11 +37,9 @@ public class VisitorCommandFactory {
         return new AccessLogCreateCommand(
             visitorId,
             visitorHash,
-            requestUrl,
             referer,
             osType,
             browserType,
-            method,
             pageUrl
         );
     }

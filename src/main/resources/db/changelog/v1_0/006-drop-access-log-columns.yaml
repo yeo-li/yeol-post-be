@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-drop-access-log-request-url-method
+      author: yeoli
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: access_log }
+          - columnExists:
+              tableName: access_log
+              columnName: request_url
+          - columnExists:
+              tableName: access_log
+              columnName: method
+      changes:
+        - dropColumn:
+            tableName: access_log
+            columnName: request_url
+        - dropColumn:
+            tableName: access_log
+            columnName: method
