@@ -7,3 +7,7 @@ databaseChangeLog:
       file: db/changelog/v1_0/003-create-streak-tables.yaml
   - include:
       file: db/changelog/v1_0/004-add-year-week-to-streak-status.yaml
+  - include:
+      file: db/changelog/v1_0/005-create-visitor-tables.yaml
+  - include:
+      file: db/changelog/v1_0/006-drop-access-log-columns.yaml
