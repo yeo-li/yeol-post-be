@@ -29,7 +29,7 @@ public class VisitorCommandFactory {
         String ip = ClientIpExtractor.extract(request, trustForwardedHeader);
         String visitorHash = buildVisitorHash(ip, userAgent);
 
-        String referer = request.getHeader("Referer");
+        String referer = request.getHeader("X-Referer");
 
         String osType = extractOsType(userAgent);
         String browserType = extractBrowserType(userAgent);

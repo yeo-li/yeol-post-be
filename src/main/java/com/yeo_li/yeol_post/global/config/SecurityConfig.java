@@ -75,7 +75,8 @@ public class SecurityConfig {
                 "Cache-Control",
                 "Content-Type",
                 "X-XSRF-TOKEN",
-                "X-Page-Url"
+                "X-Page-Url",
+                "X-Referer"
             ));
         // 클라이언트에서 접근 허용할 응답 헤더
         config.setExposedHeaders(List.of("X-XSRF-TOKEN"));
