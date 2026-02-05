@@ -3,11 +3,9 @@ package com.yeo_li.yeol_post.domain.post.service;
 import com.yeo_li.yeol_post.domain.category.Category;
 import com.yeo_li.yeol_post.domain.category.CategoryService;
 import com.yeo_li.yeol_post.domain.category.dto.response.CategoryResponse;
-import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
-import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
-import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
 import com.yeo_li.yeol_post.domain.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
 import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.exception.PostExceptionType;
@@ -16,8 +14,12 @@ import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
 import com.yeo_li.yeol_post.domain.post_tag.PostTagService;
 import com.yeo_li.yeol_post.domain.streak.service.StreakService;
+import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.tag.Tag;
 import com.yeo_li.yeol_post.domain.tag.TagService;
+import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
+import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,12 +38,18 @@ public class PostService {
     private final CategoryService categoryService;
     private final PostRepositoryFacade postRepositoryFacade;
     private final StreakService streakService;
+    private final NewsLetterService newsLetterService;
+    private final PostCommandFactory postCommandFactory;
 
     public void createPost(PostCreateCommand command) {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
         Post post = postRepository.save(command.toEntity());
         postTagService.createPostTag(post, tags);
         streakService.addStreakCount(LocalDateTime.now());
+        if (post.getIsPublished()) {
+            newsLetterService.sendPublishedPostMails(
+                postCommandFactory.createPostMailCommand(post));
+        }
     }
 
     public List<PostResponse> getAllPosts() {

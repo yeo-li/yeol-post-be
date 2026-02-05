@@ -6,6 +6,7 @@ import com.yeo_li.yeol_post.domain.category.Category;
 import com.yeo_li.yeol_post.domain.category.CategoryRepository;
 import com.yeo_li.yeol_post.domain.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.command.PostCreateCommand;
+import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.tag.TagRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -72,5 +73,9 @@ public class PostCommandFactory {
             request.tags(),
             isDeleted
         );
+    }
+
+    public PostMailCommand createPostMailCommand(Post post) {
+        return new PostMailCommand(post.getId(), post.getTitle(), post.getSummary());
     }
 }

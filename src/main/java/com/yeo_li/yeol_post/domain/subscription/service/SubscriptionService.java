@@ -1,0 +1,60 @@
+package com.yeo_li.yeol_post.domain.subscription.service;
+
+import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
+import com.yeo_li.yeol_post.domain.subscription.exception.SubscriptionType;
+import com.yeo_li.yeol_post.domain.subscription.facade.SubscriptionRepositoryFacade;
+import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class SubscriptionService {
+
+    private final SubscriptionRepositoryFacade subscriptionRepositoryFacade;
+
+
+    @Transactional
+    public void subscribe(String email) {
+        validate(email);
+
+        Subscription subscription = subscriptionRepositoryFacade.findNotificationByEmail(email);
+
+        if (subscription == null) {
+            subscriptionRepositoryFacade.save(new Subscription(email));
+            return;
+        }
+
+        subscription.setSubscribedAt(LocalDateTime.now());
+        subscription.setSubscriptionStatus(SubscriptionStatus.SUBSCRIBE);
+        subscription.setUnsubscribedAt(null);
+    }
+
+    private void validate(String email) {
+        if (!(email.contains("@") && email.contains("."))) {
+            throw new GeneralException(SubscriptionType.EMAIL_INVALID);
+        }
+    }
+
+    @Transactional
+    public void unsubscribe(String token) {
+        Subscription subscription = subscriptionRepositoryFacade.finaNotificationByVerifyToken(
+            token);
+
+        if (subscription == null) {
+            throw new GeneralException(SubscriptionType.NOTIFICATION_NOT_FOUND);
+        }
+
+        subscription.setUnsubscribedAt(LocalDateTime.now());
+        subscription.setSubscriptionStatus(SubscriptionStatus.UNSUBSCRIBE);
+    }
+
+    public List<Subscription> getSubscribedEmail() {
+        return subscriptionRepositoryFacade.findNotificationsBySubscriptionStatus(
+            SubscriptionStatus.SUBSCRIBE);
+    }
+}
