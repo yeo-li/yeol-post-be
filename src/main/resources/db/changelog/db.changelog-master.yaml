@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/v1_0/005-create-visitor-tables.yaml
   - include:
       file: db/changelog/v1_0/006-drop-access-log-columns.yaml
+  - include:
+      file: db/changelog/v1_0/007-create-subscription-table.yaml
