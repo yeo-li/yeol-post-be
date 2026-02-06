@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SubscriptionService {
 
     private final SubscriptionRepositoryFacade subscriptionRepositoryFacade;
-
+    private final NewsLetterService newsLetterService;
 
     @Transactional
     public void subscribe(String email) {
@@ -25,13 +25,20 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepositoryFacade.findNotificationByEmail(email);
 
         if (subscription == null) {
-            subscriptionRepositoryFacade.save(new Subscription(email));
+            Subscription newSubscription = subscriptionRepositoryFacade.save(
+                new Subscription(email));
+            newsLetterService.sendSubscribedNotification(newSubscription);
+            return;
+        }
+
+        if (subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
             return;
         }
 
         subscription.setSubscribedAt(LocalDateTime.now());
         subscription.setSubscriptionStatus(SubscriptionStatus.SUBSCRIBE);
         subscription.setUnsubscribedAt(null);
+        newsLetterService.sendSubscribedNotification(subscription);
     }
 
     private void validate(String email) {
@@ -51,6 +58,7 @@ public class SubscriptionService {
 
         subscription.setUnsubscribedAt(LocalDateTime.now());
         subscription.setSubscriptionStatus(SubscriptionStatus.UNSUBSCRIBE);
+        newsLetterService.sendUnsubscribedNotification(subscription);
     }
 
     public List<Subscription> getSubscribedEmail() {
