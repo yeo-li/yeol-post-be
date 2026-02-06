@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.subscription.service;
 
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
+import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
 import com.yeo_li.yeol_post.domain.subscription.exception.SubscriptionType;
 import com.yeo_li.yeol_post.domain.subscription.facade.SubscriptionRepositoryFacade;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
@@ -56,6 +57,10 @@ public class SubscriptionService {
             throw new GeneralException(SubscriptionType.NOTIFICATION_NOT_FOUND);
         }
 
+        if (subscription.getSubscriptionStatus() == SubscriptionStatus.UNSUBSCRIBE) {
+            return;
+        }
+
         subscription.setUnsubscribedAt(LocalDateTime.now());
         subscription.setSubscriptionStatus(SubscriptionStatus.UNSUBSCRIBE);
         newsLetterService.sendUnsubscribedNotification(subscription);
@@ -64,5 +69,11 @@ public class SubscriptionService {
     public List<Subscription> getSubscribedEmail() {
         return subscriptionRepositoryFacade.findNotificationsBySubscriptionStatus(
             SubscriptionStatus.SUBSCRIBE);
+    }
+
+    public SubscriptionCountResponse getSubscriptionCount() {
+        int count = subscriptionRepositoryFacade.findNotificationsBySubscriptionStatus(
+            SubscriptionStatus.SUBSCRIBE).size();
+        return new SubscriptionCountResponse(count);
     }
 }

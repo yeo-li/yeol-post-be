@@ -1,5 +1,6 @@
 package com.yeo_li.yeol_post.domain.subscription.controller;
 
+import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import jakarta.validation.constraints.NotNull;
@@ -35,5 +36,12 @@ public class SubscriptionController {
         subscriptionService.unsubscribe(token);
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess());
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<SubscriptionCountResponse>> getSubscriptionsCount() {
+        SubscriptionCountResponse response = subscriptionService.getSubscriptionCount();
+
+        return ResponseEntity.ok().body(ApiResponse.onSuccess(response));
     }
 }
