@@ -27,7 +27,7 @@ public class SubscriptionRepositoryFacade {
     }
 
     @Transactional
-    public void save(Subscription subscription) {
-        subscriptionRepository.save(subscription);
+    public Subscription save(Subscription subscription) {
+        return subscriptionRepository.save(subscription);
     }
 }

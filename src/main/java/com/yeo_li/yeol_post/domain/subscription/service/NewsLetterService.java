@@ -18,13 +18,11 @@ import org.springframework.util.StreamUtils;
 public class NewsLetterService {
 
     private final MailService mailService;
-    private final SubscriptionService subscriptionService;
 
     @Value("${app.frontend.origin}")
     private String frontendOrigin;
 
-    public void sendPublishedPostMails(PostMailCommand command) {
-        List<Subscription> subscriptions = subscriptionService.getSubscribedEmail();
+    public void sendPublishedPostMails(List<Subscription> subscriptions, PostMailCommand command) {
 
         for (Subscription subscription : subscriptions) {
             try {
@@ -51,5 +49,44 @@ public class NewsLetterService {
             "[yeolpost] 새 글이 올라왔어요!",
             html
         );
+    }
+
+    public void sendSubscribedNotification(Subscription subscription) {
+        try {
+
+            String html = StreamUtils.copyToString(
+                    new ClassPathResource("mail/subscribed.html").getInputStream(),
+                    StandardCharsets.UTF_8
+                )
+                .replace("{frontendOrigin}", frontendOrigin)
+                .replace("{token}", subscription.getVerifyToken());
+
+            mailService.sendHtmlMail(
+                subscription.getEmail(),
+                "[yeolpost] 구독이 완료되었습니다.",
+                html
+            );
+        } catch (IOException e) {
+            log.error("{}발송 실패", subscription.getEmail(), e);
+        }
+    }
+
+    public void sendUnsubscribedNotification(Subscription subscription) {
+        try {
+
+            String html = StreamUtils.copyToString(
+                    new ClassPathResource("mail/unsubscribed.html").getInputStream(),
+                    StandardCharsets.UTF_8
+                )
+                .replace("{frontendOrigin}", frontendOrigin);
+
+            mailService.sendHtmlMail(
+                subscription.getEmail(),
+                "[yeolpost] 구독이 해지되었습니다.",
+                html
+            );
+        } catch (IOException e) {
+            log.error("{}발송 실패", subscription.getEmail(), e);
+        }
     }
 }
