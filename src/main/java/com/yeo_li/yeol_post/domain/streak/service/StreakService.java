@@ -1,6 +1,5 @@
 package com.yeo_li.yeol_post.domain.streak.service;
 
-import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.streak.domain.StreakStatus;
 import com.yeo_li.yeol_post.domain.streak.domain.WeeklyStreak;
@@ -9,6 +8,7 @@ import com.yeo_li.yeol_post.domain.streak.exception.StreakExceptionType;
 import com.yeo_li.yeol_post.domain.streak.facade.StreakStatusRepositoryFacade;
 import com.yeo_li.yeol_post.domain.streak.facade.WeeklyStreakRepositoryFacade;
 import com.yeo_li.yeol_post.domain.streak.repository.WeeklyStreakRepository;
+import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -26,6 +26,7 @@ public class StreakService {
     private final WeeklyStreakRepositoryFacade weeklyStreakRepositoryFacade;
     private final StreakStatusRepositoryFacade streakStatusRepositoryFacade;
     private final WeeklyStreakRepository weeklyStreakRepository;
+
 
     public StreakResponse getStreaks() {
         List<WeeklyStreak> streaks = weeklyStreakRepositoryFacade.findRecentWeeklyStreaks();

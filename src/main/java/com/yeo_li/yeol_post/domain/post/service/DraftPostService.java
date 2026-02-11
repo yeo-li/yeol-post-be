@@ -6,6 +6,7 @@ import com.yeo_li.yeol_post.domain.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
 import com.yeo_li.yeol_post.domain.post_tag.PostTagService;
@@ -18,6 +19,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,6 +34,8 @@ public class DraftPostService {
     private final NewsLetterService newsLetterService;
     private final SubscriptionService subscriptionService;
     private final PostCommandFactory postCommandFactory;
+
+    private final ApplicationEventPublisher publisher;
 
     public Long createDraftPost(DraftPostCreateCommand command) {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
@@ -78,11 +82,10 @@ public class DraftPostService {
         Post post = postRepository.findPostById(postId);
         post.setIsPublished(true);
         post.setPublishedAt(LocalDateTime.now());
-        streakService.addStreakCount(LocalDateTime.now());
-        if (post.getIsPublished()) {
-            newsLetterService.sendPublishedPostMails(
-                subscriptionService.getSubscribedEmail(),
-                postCommandFactory.createPostMailCommand(post));
-        }
+
+        publisher.publishEvent(
+            new PostPublishedEvent(post.getId(), post.getTitle(), post.getSummary(),
+                post.getPublishedAt())
+        );
     }
 }
