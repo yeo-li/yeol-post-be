@@ -8,6 +8,7 @@ import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
 import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.post.exception.PostExceptionType;
 import com.yeo_li.yeol_post.domain.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
@@ -22,10 +23,10 @@ import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,15 +44,18 @@ public class PostService {
     private final SubscriptionService subscriptionService;
     private final PostCommandFactory postCommandFactory;
 
+    private final ApplicationEventPublisher publisher;
+
+    @Transactional
     public void createPost(PostCreateCommand command) {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
         Post post = postRepository.save(command.toEntity());
         postTagService.createPostTag(post, tags);
-        streakService.addStreakCount(LocalDateTime.now());
-        if (post.getIsPublished()) {
-            newsLetterService.sendPublishedPostMails(subscriptionService.getSubscribedEmail(),
-                postCommandFactory.createPostMailCommand(post));
-        }
+
+        publisher.publishEvent(
+            new PostPublishedEvent(post.getId(), post.getTitle(), post.getSummary(),
+                post.getPublishedAt())
+        );
     }
 
     public List<PostResponse> getAllPosts() {
