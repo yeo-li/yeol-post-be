@@ -1,7 +1,6 @@
 package com.yeo_li.yeol_post.domain.post.controller;
 
 import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
-import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
@@ -9,6 +8,7 @@ import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.response.DraftPostCreateResponse;
 import com.yeo_li.yeol_post.domain.post.service.DraftPostService;
 import com.yeo_li.yeol_post.domain.post.service.PostService;
+import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -43,7 +43,7 @@ public class DraftController {
         @AuthenticationPrincipal OAuth2User principal) {
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         List<PostResponse> posts = postService.getAllDraftPosts();
 
@@ -58,7 +58,7 @@ public class DraftController {
         @RequestBody @Valid PostCreateRequest request) {
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         Long postId = draftPostService.createDraftPost(
             postCommandFactory.createDraftPostCommand(request));
@@ -79,7 +79,7 @@ public class DraftController {
 
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         draftPostService.updateDraftPost(postId, request);
 
@@ -94,7 +94,7 @@ public class DraftController {
         @PathVariable Long postId) {
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         draftPostService.publishPost(postId);
 

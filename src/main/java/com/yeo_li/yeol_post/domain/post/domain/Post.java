@@ -1,9 +1,9 @@
 package com.yeo_li.yeol_post.domain.post.domain;
 
-import com.yeo_li.yeol_post.domain.admin.domain.Admin;
 import com.yeo_li.yeol_post.domain.category.Category;
-import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
+import com.yeo_li.yeol_post.domain.user.domain.User;
+import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,8 +54,8 @@ public class Post extends BaseTimeEntity {
     private Boolean isDeleted;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_id")
-    private Admin admin;
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")

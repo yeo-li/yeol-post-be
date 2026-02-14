@@ -1,16 +1,19 @@
-package com.yeo_li.yeol_post.domain.admin.domain;
+package com.yeo_li.yeol_post.domain.user.domain;
 
-import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -19,13 +22,13 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Admin extends BaseTimeEntity {
+public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, name = "kakao_id", unique = true)
+    @Column(nullable = false, unique = true)
     private String kakaoId;
 
     @NotNull
@@ -35,20 +38,21 @@ public class Admin extends BaseTimeEntity {
     @Column(length = 10)
     private String nickname;
 
-    @NotNull
-    @Column(length = 20, unique = true)
-    private String username;
-
     @Email
     private String email;
 
     @NotNull
-    @Column(length = 20)
-    private String password;
+    @Column(name = "email_opt_in", nullable = false)
+    private Boolean emailOptIn = false;
 
-    @Column(nullable = false, columnDefinition = "boolean default false")
-    private boolean isDeleted;
+    @Column(name = "onboarding_completed_at")
+    private LocalDateTime onboardingCompletedAt;
 
-    @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();
 }

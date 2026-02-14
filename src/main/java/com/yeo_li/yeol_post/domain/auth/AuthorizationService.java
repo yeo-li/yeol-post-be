@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.domain.auth;
 
-import com.yeo_li.yeol_post.domain.admin.domain.Admin;
-import com.yeo_li.yeol_post.domain.admin.repository.AdminRepository;
+import com.yeo_li.yeol_post.domain.user.domain.User;
+import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthorizationService {
 
-    private final AdminRepository adminRepository;
+    private final UserRepository userRepository;
 
-    public void validateAdminAccess(String kakaoId) {
-        Admin admin = adminRepository.findByKakaoId(kakaoId)
-            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 관리자입니다."));
+    public void validateUserAccess(String kakaoId) {
+        User user = userRepository.findByKakaoId(kakaoId)
+            .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 사용자입니다."));
     }
 
 }

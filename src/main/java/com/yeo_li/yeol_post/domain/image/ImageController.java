@@ -1,8 +1,8 @@
 package com.yeo_li.yeol_post.domain.image;
 
 import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
-import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import com.yeo_li.yeol_post.domain.image.dto.ImageUploadResponse;
+import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ImageController {
 
         // 인증, 인가 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         ImageService.StoredImage storedImage = imageService.store(file);
         ImageUploadResponse response = new ImageUploadResponse(storedImage.url());

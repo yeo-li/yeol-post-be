@@ -47,7 +47,7 @@ public class CategoryController {
 
         // 인증, 인가 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         categoryService.saveCategory(request.toCommand());
 
@@ -64,7 +64,7 @@ public class CategoryController {
 
         // 인증, 인가 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         categoryService.deleteCategory(categoryId);
 
@@ -82,7 +82,7 @@ public class CategoryController {
 
         // 인증, 인가 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         categoryService.updateCategory(categoryId, request);
 

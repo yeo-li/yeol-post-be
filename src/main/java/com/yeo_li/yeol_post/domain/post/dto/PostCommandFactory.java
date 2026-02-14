@@ -1,13 +1,13 @@
 package com.yeo_li.yeol_post.domain.post.dto;
 
-import com.yeo_li.yeol_post.domain.admin.domain.Admin;
-import com.yeo_li.yeol_post.domain.admin.repository.AdminRepository;
 import com.yeo_li.yeol_post.domain.category.Category;
 import com.yeo_li.yeol_post.domain.category.CategoryRepository;
 import com.yeo_li.yeol_post.domain.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.tag.TagRepository;
+import com.yeo_li.yeol_post.domain.user.domain.User;
+import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PostCommandFactory {
 
-    private final AdminRepository adminRepository;
+    private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
 
@@ -25,9 +25,9 @@ public class PostCommandFactory {
         Boolean isPublished = true;
         LocalDateTime publishedAt = LocalDateTime.now();
 
-        Admin admin = adminRepository.findById(request.adminId())
+        User user = userRepository.findById(request.userId())
             .orElseThrow(() -> new IllegalArgumentException(
-                "PostCommandFactory:createPostCommand: Admin의 Id가 올바르지 않습니다."));
+                "PostCommandFactory:createPostCommand: User의 Id가 올바르지 않습니다."));
 
         Category category = categoryRepository.findById(request.categoryId())
             .orElseThrow(() -> new IllegalArgumentException(
@@ -42,7 +42,7 @@ public class PostCommandFactory {
             request.content(),
             isPublished,
             publishedAt,
-            admin,
+            user,
             category,
             request.tags(),
             isDeleted
@@ -52,9 +52,9 @@ public class PostCommandFactory {
     public DraftPostCreateCommand createDraftPostCommand(PostCreateRequest request) {
         Boolean isPublished = false;
 
-        Admin admin = adminRepository.findById(request.adminId())
+        User user = userRepository.findById(request.userId())
             .orElseThrow(() -> new IllegalArgumentException(
-                "PostCommandFactory:createPostCommand: Admin의 Id가 올바르지 않습니다."));
+                "PostCommandFactory:createPostCommand: User의 Id가 올바르지 않습니다."));
 
         Category category = categoryRepository.findById(request.categoryId())
             .orElseGet(null);
@@ -68,7 +68,7 @@ public class PostCommandFactory {
             request.content(),
             isPublished,
             null,
-            admin,
+            user,
             category,
             request.tags(),
             isDeleted

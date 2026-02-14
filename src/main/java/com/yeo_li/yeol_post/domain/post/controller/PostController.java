@@ -43,7 +43,7 @@ public class PostController {
     private final PostService postService;
     private final PostCommandFactory postCommandFactory;
 
-    @Operation(summary = "게시물 저장", description = "관리자가 작성한 게시물을 저장합니다.")
+    @Operation(summary = "게시물 저장", description = "사용자가 작성한 게시물을 저장합니다.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
             description = "저장 성공"
@@ -54,7 +54,7 @@ public class PostController {
         @RequestBody @Valid PostCreateRequest request) {
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         postService.createPost(postCommandFactory.createPostCommand(request));
 
@@ -85,10 +85,10 @@ public class PostController {
         } else if (params.containsKey("author")) { // 사용자 -> 완료 -> 출간된 게시물만 반환
             postResponses = postService.getPostByAuthor(params.get("author"));
         } else if (params.containsKey("limit") && params.containsKey(
-            "is_published")) { // 사용자 & 관리자 -> 여기만 검사해주면 될듯
+            "is_published")) { // 사용자(권한별)
             postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")),
                 Boolean.parseBoolean(params.get("is_published")));
-        } else if (params.containsKey("is_published")) { // 관리자
+        } else if (params.containsKey("is_published")) { // 권한 사용자
             if (Boolean.parseBoolean(params.get("is_published"))) {
                 postResponses = postService.getAllPublishedPosts();
             } else {
@@ -122,7 +122,7 @@ public class PostController {
 
         // 인가 사용자인지 검증
         Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateAdminAccess(String.valueOf(attributes.get("id")));
+        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         postService.updatePost(postId, request);
 

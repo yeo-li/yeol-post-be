@@ -1,7 +1,9 @@
 package com.yeo_li.yeol_post.global.config;
 
+import com.yeo_li.yeol_post.domain.user.UserOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +17,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     @Value("${app.frontend.origin}")
     private String frontendOrigin;
+
+    private final UserOAuth2UserService userOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -51,9 +56,10 @@ public class SecurityConfig {
                 .permitAll()
             )
             .oauth2Login(oauth2 ->
-                oauth2.successHandler((request, response, authentication) -> {
-                    response.sendRedirect(frontendOrigin + "/login/success");
-                })
+                oauth2.userInfoEndpoint(userInfo -> userInfo.userService(userOAuth2UserService))
+                    .successHandler((request, response, authentication) -> {
+                        response.sendRedirect(frontendOrigin + "/login/success");
+                    })
             );
 
         return http.build();

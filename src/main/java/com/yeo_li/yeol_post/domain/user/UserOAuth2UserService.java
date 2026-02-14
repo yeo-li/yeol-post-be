@@ -1,7 +1,7 @@
-package com.yeo_li.yeol_post.domain.admin;
+package com.yeo_li.yeol_post.domain.user;
 
-import com.yeo_li.yeol_post.domain.admin.domain.Admin;
-import com.yeo_li.yeol_post.domain.admin.repository.AdminRepository;
+import com.yeo_li.yeol_post.domain.user.domain.User;
+import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AdminOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
+public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
-    private final AdminRepository adminRepository;
+    private final UserRepository userRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -28,12 +28,12 @@ public class AdminOAuth2UserService implements OAuth2UserService<OAuth2UserReque
         String kakaoId = attributes.get("id").toString();
 
         // 우리 DB에 등록된 사용자 찾기
-        Optional<Admin> admin = adminRepository.findByKakaoId(kakaoId);
+        Optional<User> user = userRepository.findByKakaoId(kakaoId);
 
-        if (admin.isEmpty()) {
+        if (user.isEmpty()) {
 
-            System.out.printf("가입된 관리자가 아닙니다.(%s)\n", kakaoId);
-            throw new OAuth2AuthenticationException("가입된 관리자가 아닙니다.");
+            System.out.printf("가입된 사용자가 아닙니다.(%s)\n", kakaoId);
+            throw new OAuth2AuthenticationException("가입된 사용자가 아닙니다.");
         }
 
         // CustomUserDetails 또는 그냥 oauth2User 반환 가능
