@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.domain.user;
 
 import com.yeo_li.yeol_post.domain.user.domain.User;
+import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +28,10 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
         OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
 
         // 카카오 정보 꺼내기
+        if (oauth2User.getAttributes().get("id") == null) {
+            throw new OAuth2AuthenticationException(
+                UserExceptionType.USER_OAUTH2_ID_MISSING.getMessage());
+        }
         String kakaoId = String.valueOf(oauth2User.getAttributes().get("id"));
 
         // 우리 DB에 등록된 사용자 찾기

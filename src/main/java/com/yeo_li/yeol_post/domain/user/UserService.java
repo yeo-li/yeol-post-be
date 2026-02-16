@@ -9,6 +9,7 @@ import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,19 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
     private final UserRepository userRepository;
 
     public User findUserByKakaoId(String kakaoId) {
         return userRepository.findUserByKakaoId(kakaoId);
+    }
+
+    public boolean isDuplicatedNickname(String nickname) {
+        User duplicatedUser = userRepository.findUserByNickname(nickname);
+        return duplicatedUser != null;
+
     }
 
     @Transactional
@@ -31,30 +41,27 @@ public class UserService {
             throw new GeneralException(ErrorStatus.RESOURCE_NOT_FOUND);
         }
 
+        UserUpdateRequest normalizedRequest = normalizeUserUpdateRequest(request);
+        validateUserUpdateRequest(user, normalizedRequest);
+
         if (user.getOnboardingCompletedAt() == null) {
-            initUser(principal, request);
+            initUser(user, normalizedRequest);
             return;
         }
 
-        if (request.nickname() != null) {
-            user.setNickname(request.nickname());
+        if (normalizedRequest.nickname() != null) {
+            user.setNickname(normalizedRequest.nickname());
         }
-        if (request.email() != null) {
-            user.setEmail(request.email());
+        if (normalizedRequest.email() != null) {
+            user.setEmail(normalizedRequest.email());
         }
-        if (request.emailOptIn() != null) {
-            user.setEmailOptIn(request.emailOptIn());
+        if (normalizedRequest.emailOptIn() != null) {
+            user.setEmailOptIn(normalizedRequest.emailOptIn());
         }
     }
 
     @Transactional
-    public void initUser(OAuth2User principal, UserUpdateRequest request) {
-        String kakaoId = getKakaoId(principal);
-        User user = userRepository.findUserByKakaoId(kakaoId);
-        if (user == null) {
-            throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
-        }
-
+    public void initUser(User user, UserUpdateRequest request) {
         if (request.nickname() == null || request.email() == null || request.emailOptIn() == null) {
             throw new GeneralException(UserExceptionType.USER_ONBOARDING_INVALID);
         }
@@ -67,7 +74,46 @@ public class UserService {
 
     private String getKakaoId(OAuth2User principal) {
         Map<String, Object> attributes = principal.getAttributes();
+        if (attributes.get("id") == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
         return String.valueOf(attributes.get("id"));
+    }
+
+    private UserUpdateRequest normalizeUserUpdateRequest(UserUpdateRequest request) {
+        if (request == null) {
+            return null;
+        }
+
+        String normalizedNickname = request.nickname() == null ? null : request.nickname().trim();
+        String normalizedEmail = request.email() == null ? null : request.email().trim();
+
+        return new UserUpdateRequest(normalizedNickname, normalizedEmail, request.emailOptIn());
+    }
+
+    private void validateUserUpdateRequest(User user, UserUpdateRequest request) {
+        if (request == null) {
+            throw new GeneralException(UserExceptionType.USER_UPDATE_INVALID);
+        }
+
+        if (request.email() != null) {
+            String email = request.email().trim();
+            if (email.isEmpty() || !EMAIL_PATTERN.matcher(email).matches()) {
+                throw new GeneralException(UserExceptionType.USER_EMAIL_INVALID);
+            }
+        }
+
+        if (request.nickname() != null) {
+            String nickname = request.nickname().trim();
+            if (nickname.isEmpty() || nickname.length() > 10) {
+                throw new GeneralException(UserExceptionType.USER_NICKNAME_INVALID);
+            }
+
+            User duplicatedUser = userRepository.findUserByNickname(nickname);
+            if (duplicatedUser != null && !duplicatedUser.getId().equals(user.getId())) {
+                throw new GeneralException(UserExceptionType.USER_NICKNAME_DUPLICATED);
+            }
+        }
     }
 
 }
