@@ -15,3 +15,5 @@ databaseChangeLog:
       file: db/changelog/v1_0/007-create-subscription-table.yaml
   - include:
       file: db/changelog/v1_0/008-migrate-admin-to-user.yaml
+  - include:
+      file: db/changelog/v1_0/009-add-user-deleted-at-column.yaml

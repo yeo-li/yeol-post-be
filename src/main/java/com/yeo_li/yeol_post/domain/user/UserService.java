@@ -24,11 +24,11 @@ public class UserService {
     private final UserRepository userRepository;
 
     public User findUserByKakaoId(String kakaoId) {
-        return userRepository.findUserByKakaoId(kakaoId);
+        return userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
     }
 
     public boolean isDuplicatedNickname(String nickname) {
-        User duplicatedUser = userRepository.findUserByNickname(nickname);
+        User duplicatedUser = userRepository.findUserByNicknameAndDeletedAtIsNull(nickname);
         return duplicatedUser != null;
 
     }
@@ -36,7 +36,7 @@ public class UserService {
     @Transactional
     public void updateUser(OAuth2User principal, UserUpdateRequest request) {
         String kakaoId = getKakaoId(principal);
-        User user = userRepository.findUserByKakaoId(kakaoId);
+        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
             throw new GeneralException(ErrorStatus.RESOURCE_NOT_FOUND);
         }
@@ -109,11 +109,23 @@ public class UserService {
                 throw new GeneralException(UserExceptionType.USER_NICKNAME_INVALID);
             }
 
-            User duplicatedUser = userRepository.findUserByNickname(nickname);
+            User duplicatedUser = userRepository.findUserByNicknameAndDeletedAtIsNull(nickname);
             if (duplicatedUser != null && !duplicatedUser.getId().equals(user.getId())) {
                 throw new GeneralException(UserExceptionType.USER_NICKNAME_DUPLICATED);
             }
         }
+    }
+
+    @Transactional
+    public void deleteUser(OAuth2User principal) {
+        String kakaoId = getKakaoId(principal);
+
+        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
+        if (user == null) {
+            throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
+        }
+
+        user.setDeletedAt(LocalDateTime.now());
     }
 
 }

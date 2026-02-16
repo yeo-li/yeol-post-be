@@ -12,7 +12,7 @@ public class AuthorizationService {
     private final UserRepository userRepository;
 
     public void validateUserAccess(String kakaoId) {
-        User user = userRepository.findByKakaoId(kakaoId)
+        User user = userRepository.findByKakaoIdAndDeletedAtIsNull(kakaoId)
             .orElseThrow(() -> new IllegalArgumentException("등록되지 않은 사용자입니다."));
     }
 

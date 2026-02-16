@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.user.domain;
 
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -52,6 +53,9 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    @Nullable
+    private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();

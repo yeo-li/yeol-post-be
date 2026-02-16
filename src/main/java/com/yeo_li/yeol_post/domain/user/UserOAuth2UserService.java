@@ -35,7 +35,7 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
         String kakaoId = String.valueOf(oauth2User.getAttributes().get("id"));
 
         // 우리 DB에 등록된 사용자 찾기
-        User user = userRepository.findByKakaoId(kakaoId)
+        User user = userRepository.findByKakaoIdAndDeletedAtIsNull(kakaoId)
             .orElseThrow(() -> new OAuth2AuthenticationException("가입된 사용자가 아닙니다."));
 
         Collection<GrantedAuthority> authorities = List.of(
