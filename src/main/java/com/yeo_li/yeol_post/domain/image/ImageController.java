@@ -3,7 +3,6 @@ package com.yeo_li.yeol_post.domain.image;
 import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
 import com.yeo_li.yeol_post.domain.image.dto.ImageUploadResponse;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -11,8 +10,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,13 +28,8 @@ public class ImageController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<ImageUploadResponse>> uploadImage(
-        @AuthenticationPrincipal OAuth2User principal,
         @RequestParam("file") MultipartFile file
     ) {
-
-        // 인증, 인가 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         ImageService.StoredImage storedImage = imageService.store(file);
         ImageUploadResponse response = new ImageUploadResponse(storedImage.url());

@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,17 +50,12 @@ public class UserController {
         ));
     }
 
-    @PatchMapping("/{userId}")
+    @PatchMapping("/me")
     public ResponseEntity<ApiResponse<Object>> updateUser(
         @AuthenticationPrincipal OAuth2User principal,
-        @PathVariable Long userId,
         @RequestBody UserUpdateRequest request) {
 
-        // 인증, 인가 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
-
-        userService.updateUser(userId, request);
+        userService.updateUser(principal, request);
 
         return ResponseEntity
             .status(HttpStatus.OK)

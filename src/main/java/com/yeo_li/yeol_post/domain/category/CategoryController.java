@@ -8,12 +8,9 @@ import com.yeo_li.yeol_post.domain.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -41,13 +38,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Object>> createCategory(
-        @AuthenticationPrincipal OAuth2User principal,
-        @RequestBody @Valid CategoryCreateRequest request
-    ) {
-
-        // 인증, 인가 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
+        @RequestBody @Valid CategoryCreateRequest request) {
 
         categoryService.saveCategory(request.toCommand());
 
@@ -58,13 +49,8 @@ public class CategoryController {
 
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<Object>> deleteCategory(
-        @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long categoryId
     ) {
-
-        // 인증, 인가 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         categoryService.deleteCategory(categoryId);
 
@@ -75,14 +61,9 @@ public class CategoryController {
 
     @PatchMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<Void>> updateCategory(
-        @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long categoryId,
         @RequestBody @Valid CategoryUpdateRequest request
     ) {
-
-        // 인증, 인가 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         categoryService.updateCategory(categoryId, request);
 

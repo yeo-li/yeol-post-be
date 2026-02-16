@@ -39,10 +39,48 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**",
-                    "/logout",
-                    "/error", "/api/v1/**")
-                .permitAll()
+                .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**", "/logout",
+                    "/error")
+                .permitAll() // public page
+
+                // public read endpoint
+                .requestMatchers(HttpMethod.GET,
+                    "/api/v1/posts/**",
+                    "/api/v1/categories",
+                    "/api/v1/categories/recent",
+                    "/api/v1/tags",
+                    "/api/v1/images/**",
+                    "/api/v1/streaks",
+                    "/api/v1/visitors/**",
+                    "/api/v1/subscriptions/**",
+                    "/api/v1/users/me"
+                ).permitAll()
+
+                // public write endpoint
+                .requestMatchers(HttpMethod.POST,
+                    "/api/v1/subscriptions/**",
+                    "/api/v1/visitors/access",
+                    "/api/v1/posts/*/views"
+                ).permitAll()
+
+                // admin endpoint
+                .requestMatchers("/api/v1/drafts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST,
+                    "/api/v1/posts",
+                    "/api/v1/categories",
+                    "/api/v1/images"
+                ).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH,
+                    "/api/v1/posts/**",
+                    "/api/v1/categories/**",
+                    "/api/v1/drafts/**"
+                ).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE,
+                    "/api/v1/posts/**",
+                    "/api/v1/categories/**"
+                ).hasRole("ADMIN")
+                .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().authenticated()
             )
             .logout(logout -> logout

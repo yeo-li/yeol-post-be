@@ -2,13 +2,16 @@ package com.yeo_li.yeol_post.domain.user;
 
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
-import java.util.Map;
-import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -24,19 +27,23 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
         OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
 
         // 카카오 정보 꺼내기
-        Map<String, Object> attributes = oauth2User.getAttributes();
-        String kakaoId = attributes.get("id").toString();
+        String kakaoId = String.valueOf(oauth2User.getAttributes().get("id"));
 
         // 우리 DB에 등록된 사용자 찾기
-        Optional<User> user = userRepository.findByKakaoId(kakaoId);
+        User user = userRepository.findByKakaoId(kakaoId)
+            .orElseThrow(() -> new OAuth2AuthenticationException("가입된 사용자가 아닙니다."));
 
-        if (user.isEmpty()) {
+        Collection<GrantedAuthority> authorities = List.of(
+            new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
 
-            System.out.printf("가입된 사용자가 아닙니다.(%s)\n", kakaoId);
-            throw new OAuth2AuthenticationException("가입된 사용자가 아닙니다.");
-        }
+        String userNameAttributeName = userRequest.getClientRegistration()
+            .getProviderDetails()
+            .getUserInfoEndpoint()
+            .getUserNameAttributeName();
 
         // CustomUserDetails 또는 그냥 oauth2User 반환 가능
-        return oauth2User;
+        return new DefaultOAuth2User(authorities, oauth2User.getAttributes(),
+            userNameAttributeName);
     }
 }

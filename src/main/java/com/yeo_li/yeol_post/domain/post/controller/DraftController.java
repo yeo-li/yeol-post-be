@@ -12,12 +12,9 @@ import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,11 +36,7 @@ public class DraftController {
     private final PostCommandFactory postCommandFactory;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PostResponse>>> getDrafts(
-        @AuthenticationPrincipal OAuth2User principal) {
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getDrafts() {
 
         List<PostResponse> posts = postService.getAllDraftPosts();
 
@@ -54,11 +47,7 @@ public class DraftController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<DraftPostCreateResponse>> savePost(
-        @AuthenticationPrincipal OAuth2User principal,
         @RequestBody @Valid PostCreateRequest request) {
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         Long postId = draftPostService.createDraftPost(
             postCommandFactory.createDraftPostCommand(request));
@@ -73,13 +62,8 @@ public class DraftController {
 
     @PatchMapping("/{postId}")
     public ResponseEntity<?> updateDraftPost(
-        @AuthenticationPrincipal OAuth2User principal,
         @PathVariable("postId") Long postId,
         @RequestBody PostUpdateRequest request) {
-
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         draftPostService.updateDraftPost(postId, request);
 
@@ -90,11 +74,7 @@ public class DraftController {
 
     @PostMapping("/{postId}/publish")
     public ResponseEntity<ApiResponse<Void>> publishPost(
-        @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long postId) {
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         draftPostService.publishPost(postId);
 

@@ -21,8 +21,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -50,11 +48,8 @@ public class PostController {
             , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> savePost(@AuthenticationPrincipal OAuth2User principal,
+    public ResponseEntity<ApiResponse<Void>> savePost(
         @RequestBody @Valid PostCreateRequest request) {
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         postService.createPost(postCommandFactory.createPostCommand(request));
 
@@ -116,13 +111,8 @@ public class PostController {
 
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> updatePost(
-        @AuthenticationPrincipal OAuth2User principal,
         @PathVariable("postId") Long postId,
         @RequestBody PostUpdateRequest request) {
-
-        // 인가 사용자인지 검증
-        Map<String, Object> attributes = principal.getAttributes();
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
 
         postService.updatePost(postId, request);
 
