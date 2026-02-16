@@ -20,6 +20,11 @@ public class SubscriptionService {
     private final NewsLetterService newsLetterService;
 
     @Transactional
+    public Subscription saveSubscription(String email) {
+        return subscriptionRepositoryFacade.save(new Subscription(email));
+    }
+
+    @Transactional
     public void subscribe(String email) {
         validate(email);
 
@@ -75,5 +80,9 @@ public class SubscriptionService {
         int count = subscriptionRepositoryFacade.findNotificationsBySubscriptionStatus(
             SubscriptionStatus.SUBSCRIBE).size();
         return new SubscriptionCountResponse(count);
+    }
+
+    public Subscription getSubscriptionByEmail(String email) {
+        return subscriptionRepositoryFacade.findSubscriptionByEmail(email);
     }
 }

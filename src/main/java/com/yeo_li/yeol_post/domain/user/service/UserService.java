@@ -1,5 +1,9 @@
 package com.yeo_li.yeol_post.domain.user.service;
 
+import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
+import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
+import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
@@ -24,6 +28,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final KakaoUnlinkService kakaoUnlinkService;
+    private final SubscriptionService subscriptionService;
+    private final NewsLetterService newsLetterService;
 
     public User findUserByKakaoId(String kakaoId) {
         return userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
@@ -57,11 +63,65 @@ public class UserService {
         if (normalizedRequest.nickname() != null) {
             user.setNickname(normalizedRequest.nickname());
         }
-        if (normalizedRequest.email() != null) {
-            user.setEmail(normalizedRequest.email());
+
+        String currentEmail = user.getEmail();
+        String requestEmail = normalizedRequest.email();
+        String targetEmail = currentEmail;
+        if (requestEmail != null) {
+            targetEmail = requestEmail;
         }
+        boolean isEmailChanged = requestEmail != null && !requestEmail.equals(currentEmail);
+        Subscription subscription = null;
+        if (targetEmail != null) {
+            subscription = subscriptionService.getSubscriptionByEmail(targetEmail);
+        }
+
+        if (isEmailChanged) {
+            // 기존 이메일 구독 해제
+            if (currentEmail != null) {
+                Subscription unsubscription = subscriptionService.getSubscriptionByEmail(
+                    currentEmail);
+                if (unsubscription != null) {
+                    unsubscription.setUser(null);
+                    // 구독 상태라면 구독 해제 발송
+                    if (unsubscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
+                        markAsUnsubscribed(unsubscription);
+                        newsLetterService.sendUnsubscribedNotification(unsubscription);
+                    }
+                }
+            }
+
+            // 변경한 이메일 등록 또는 활성화
+            if (subscription == null) {
+                // 없는건 이렇게 두기
+                subscription = subscriptionService.saveSubscription(requestEmail);
+                markAsUnsubscribed(subscription);
+            }
+
+            subscription.setUser(user);
+            user.setEmail(requestEmail);
+        }
+
         if (normalizedRequest.emailOptIn() != null) {
-            // todo : subscription 구독 설정으로 바꾸기
+            if (targetEmail == null) {
+                throw new GeneralException(UserExceptionType.USER_EMAIL_INVALID);
+            }
+
+            if (subscription == null) {
+                subscription = subscriptionService.saveSubscription(targetEmail);
+                markAsUnsubscribed(subscription);
+                subscription.setUser(user);
+            }
+
+            if (normalizedRequest.emailOptIn()
+                && subscription.getSubscriptionStatus() == SubscriptionStatus.UNSUBSCRIBE) {
+                subscriptionService.subscribe(targetEmail);
+            }
+            if (!normalizedRequest.emailOptIn()
+                && subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
+                markAsUnsubscribed(subscription);
+                newsLetterService.sendUnsubscribedNotification(subscription);
+            }
         }
     }
 
@@ -71,8 +131,31 @@ public class UserService {
             throw new GeneralException(UserExceptionType.USER_ONBOARDING_INVALID);
         }
 
-        user.setNickname(request.nickname());
-        user.setEmail(request.email());
+        UserUpdateRequest normalizedRequest = normalizeUserUpdateRequest(request);
+        Subscription subscription = subscriptionService.getSubscriptionByEmail(
+            normalizedRequest.email());
+
+        // 변경한 이메일 등록 또는 활성화
+        if (subscription == null) {
+            // 없는건 이렇게 두기
+            subscription = subscriptionService.saveSubscription(normalizedRequest.email());
+            markAsUnsubscribed(subscription);
+        }
+
+        subscription.setUser(user);
+
+        if (normalizedRequest.emailOptIn()
+            && subscription.getSubscriptionStatus() == SubscriptionStatus.UNSUBSCRIBE) {
+            subscriptionService.subscribe(normalizedRequest.email());
+        }
+        if (!normalizedRequest.emailOptIn()
+            && subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
+            markAsUnsubscribed(subscription);
+            newsLetterService.sendUnsubscribedNotification(subscription);
+        }
+
+        user.setNickname(normalizedRequest.nickname());
+        user.setEmail(normalizedRequest.email());
         user.setOnboardingCompletedAt(LocalDateTime.now());
     }
 
@@ -82,6 +165,11 @@ public class UserService {
             return null;
         }
         return String.valueOf(attributes.get("id"));
+    }
+
+    private void markAsUnsubscribed(Subscription subscription) {
+        subscription.setSubscriptionStatus(SubscriptionStatus.UNSUBSCRIBE);
+        subscription.setUnsubscribedAt(LocalDateTime.now());
     }
 
     private UserUpdateRequest normalizeUserUpdateRequest(UserUpdateRequest request) {
@@ -129,6 +217,15 @@ public class UserService {
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
             throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
+        }
+
+        Subscription subscription = subscriptionService.getSubscriptionByEmail(user.getEmail());
+        if (subscription != null) {
+            subscription.setUser(null);
+            if (subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
+                markAsUnsubscribed(subscription);
+                newsLetterService.sendUnsubscribedNotification(subscription);
+            }
         }
 
         kakaoUnlinkService.unlink(kakaoAccessToken);

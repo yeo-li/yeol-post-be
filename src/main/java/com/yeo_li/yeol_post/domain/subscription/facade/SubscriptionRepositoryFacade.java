@@ -26,6 +26,10 @@ public class SubscriptionRepositoryFacade {
         return subscriptionRepository.findSubscriptionsBySubscriptionStatus(status);
     }
 
+    public Subscription findSubscriptionByEmail(String email) {
+        return subscriptionRepository.findSubscriptionByEmail(email);
+    }
+
     @Transactional
     public Subscription save(Subscription subscription) {
         return subscriptionRepository.save(subscription);

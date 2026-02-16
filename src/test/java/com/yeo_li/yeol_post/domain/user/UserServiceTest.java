@@ -2,10 +2,15 @@ package com.yeo_li.yeol_post.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
+import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
@@ -18,6 +23,7 @@ import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,8 +44,22 @@ class UserServiceTest {
     @Mock
     private KakaoUnlinkService kakaoUnlinkService;
 
+    @Mock
+    private SubscriptionService subscriptionService;
+
+    @Mock
+    private NewsLetterService newsLetterService;
+
     @InjectMocks
     private UserService userService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(subscriptionService.getSubscriptionByEmail(anyString()))
+            .thenAnswer(invocation -> new Subscription(invocation.getArgument(0)));
+        lenient().when(subscriptionService.saveSubscription(anyString()))
+            .thenAnswer(invocation -> new Subscription(invocation.getArgument(0)));
+    }
 
     @Nested
     class UpdateUserTest {
@@ -68,7 +88,6 @@ class UserServiceTest {
             user.setOnboardingCompletedAt(null);
             user.setNickname("oldNick");
             user.setEmail(null);
-            user.setEmailOptIn(false);
             when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-2")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("newNick", "new@test.com", true);
@@ -79,7 +98,6 @@ class UserServiceTest {
             // then
             assertThat(user.getNickname()).isEqualTo("newNick");
             assertThat(user.getEmail()).isEqualTo("new@test.com");
-            assertThat(user.getEmailOptIn()).isTrue();
             assertThat(user.getOnboardingCompletedAt()).isNotNull();
         }
 
@@ -264,7 +282,6 @@ class UserServiceTest {
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
             user.setNickname("oldNick");
             user.setEmail("old@test.com");
-            user.setEmailOptIn(false);
             when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-4")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("newNick", null, null);
@@ -275,7 +292,6 @@ class UserServiceTest {
             // then
             assertThat(user.getNickname()).isEqualTo("newNick");
             assertThat(user.getEmail()).isEqualTo("old@test.com");
-            assertThat(user.getEmailOptIn()).isFalse();
         }
 
         @Test
@@ -318,7 +334,6 @@ class UserServiceTest {
             // then
             assertThat(user.getNickname()).isEqualTo("newNick");
             assertThat(user.getEmail()).isEqualTo("new@test.com");
-            assertThat(user.getEmailOptIn()).isTrue();
             assertThat(user.getOnboardingCompletedAt()).isNotNull();
         }
     }
