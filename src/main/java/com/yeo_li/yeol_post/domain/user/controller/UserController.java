@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.user.controller;
 
 import com.yeo_li.yeol_post.domain.post.dto.response.UserNicknameAvailabilityResponse;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserProfileResponse;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.service.UserService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
@@ -88,6 +89,38 @@ public class UserController {
         @AuthenticationPrincipal OAuth2User principal) {
 
         UserStatusResponse response = userService.getUserStatus(principal);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "내 프로필 조회", description = "로그인한 사용자의 프로필 정보를 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": {
+                        "name": "홍길동",
+                        "nickname": "yeoli",
+                        "email": "yeoli@example.com",
+                        "isSubscribed": true
+                      }
+                    }
+                    """)
+            )
+        )
+    })
+    @GetMapping("/me/profile")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getUserProfile(
+        @AuthenticationPrincipal OAuth2User principal
+    ) {
+        UserProfileResponse response = userService.getUserProfile(principal);
 
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
@@ -192,9 +225,10 @@ public class UserController {
         HttpServletRequest request,
         HttpServletResponse response
     ) throws ServletException {
-        String kakaoAccessToken = authorizedClient == null || authorizedClient.getAccessToken() == null
-            ? null
-            : authorizedClient.getAccessToken().getTokenValue();
+        String kakaoAccessToken =
+            authorizedClient == null || authorizedClient.getAccessToken() == null
+                ? null
+                : authorizedClient.getAccessToken().getTokenValue();
         userService.deleteUser(principal, kakaoAccessToken);
 
         request.logout();

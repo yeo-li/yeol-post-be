@@ -9,11 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserProfileResponse;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
@@ -457,6 +459,109 @@ class UserServiceTest {
             assertThat(response.isLoggedIn()).isTrue();
             assertThat(response.nickname()).isEqualTo("testerNick");
             assertThat(response.isOnboardingComplete()).isTrue();
+        }
+    }
+
+    @Nested
+    class GetUserProfileTest {
+
+        @Test
+        void getUserProfile_principal이_null이면_인증식별자누락_예외를_발생시킨다() {
+            // when & then
+            assertThatThrownBy(() -> userService.getUserProfile(null))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(UserExceptionType.USER_OAUTH2_ID_MISSING));
+        }
+
+        @Test
+        void getUserProfile_principal에_id가_없으면_인증식별자누락_예외를_발생시킨다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("sub", "no-id"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.getUserProfile(principal))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(UserExceptionType.USER_OAUTH2_ID_MISSING));
+        }
+
+        @Test
+        void getUserProfile_사용자가_존재하지_않으면_사용자없음_예외를_발생시킨다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-profile-1"));
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-profile-1")).thenReturn(
+                null);
+
+            // when & then
+            assertThatThrownBy(() -> userService.getUserProfile(principal))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(UserExceptionType.USER_NOT_FOUND));
+        }
+
+        @Test
+        void getUserProfile_구독상태가_SUBSCRIBE이면_구독여부_true를_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-profile-2"));
+            User user = createUser("kakao-profile-2");
+            user.setName("홍길동");
+            user.setNickname("profileNick");
+            user.setEmail("profile@test.com");
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-profile-2")).thenReturn(
+                user);
+
+            Subscription subscription = new Subscription("profile@test.com");
+            subscription.setSubscriptionStatus(SubscriptionStatus.SUBSCRIBE);
+            when(subscriptionService.getSubscriptionByEmail("profile@test.com")).thenReturn(
+                subscription);
+
+            // when
+            UserProfileResponse response = userService.getUserProfile(principal);
+
+            // then
+            assertThat(response.name()).isEqualTo("홍길동");
+            assertThat(response.nickname()).isEqualTo("profileNick");
+            assertThat(response.email()).isEqualTo("profile@test.com");
+            assertThat(response.isSubscribed()).isTrue();
+        }
+
+        @Test
+        void getUserProfile_구독정보가_없으면_구독여부_false를_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-profile-3"));
+            User user = createUser("kakao-profile-3");
+            user.setEmail("profile3@test.com");
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-profile-3")).thenReturn(
+                user);
+            when(subscriptionService.getSubscriptionByEmail("profile3@test.com")).thenReturn(null);
+
+            // when
+            UserProfileResponse response = userService.getUserProfile(principal);
+
+            // then
+            assertThat(response.isSubscribed()).isFalse();
+        }
+
+        @Test
+        void getUserProfile_구독상태가_UNSUBSCRIBE이면_구독여부_false를_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-profile-4"));
+            User user = createUser("kakao-profile-4");
+            user.setEmail("profile4@test.com");
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-profile-4")).thenReturn(
+                user);
+
+            Subscription subscription = new Subscription("profile4@test.com");
+            subscription.setSubscriptionStatus(SubscriptionStatus.UNSUBSCRIBE);
+            when(subscriptionService.getSubscriptionByEmail("profile4@test.com")).thenReturn(
+                subscription);
+
+            // when
+            UserProfileResponse response = userService.getUserProfile(principal);
+
+            // then
+            assertThat(response.isSubscribed()).isFalse();
         }
     }
 

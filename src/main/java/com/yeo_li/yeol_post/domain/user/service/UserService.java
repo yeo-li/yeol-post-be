@@ -6,6 +6,7 @@ import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserProfileResponse;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
@@ -245,6 +246,36 @@ public class UserService {
         boolean isOnboardingComplete = user.getOnboardingCompletedAt() != null;
         return new UserStatusResponse(true, user.getNickname(), isOnboardingComplete,
             user.getRole());
+    }
+
+    public UserProfileResponse getUserProfile(OAuth2User principal) {
+        if (principal == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
+
+        String kakaoId = getKakaoId(principal);
+        if (kakaoId == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
+
+        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
+        if (user == null) {
+            throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
+        }
+
+        Subscription subscription = null;
+        if (user.getEmail() != null) {
+            subscription = subscriptionService.getSubscriptionByEmail(user.getEmail());
+        }
+        boolean isSubscribed =
+            subscription != null && subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE;
+
+        return new UserProfileResponse(
+            user.getName(),
+            user.getNickname(),
+            user.getEmail(),
+            isSubscribed
+        );
     }
 
 }
