@@ -1,7 +1,8 @@
-package com.yeo_li.yeol_post.domain.user;
+package com.yeo_li.yeol_post.domain.user.service;
 
 import com.yeo_li.yeol_post.domain.user.domain.User;
-import com.yeo_li.yeol_post.domain.user.dto.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
@@ -36,6 +37,9 @@ public class UserService {
     @Transactional
     public void updateUser(OAuth2User principal, UserUpdateRequest request) {
         String kakaoId = getKakaoId(principal);
+        if (kakaoId == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
             throw new GeneralException(ErrorStatus.RESOURCE_NOT_FOUND);
@@ -75,7 +79,7 @@ public class UserService {
     private String getKakaoId(OAuth2User principal) {
         Map<String, Object> attributes = principal.getAttributes();
         if (attributes.get("id") == null) {
-            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+            return null;
         }
         return String.valueOf(attributes.get("id"));
     }
@@ -119,13 +123,33 @@ public class UserService {
     @Transactional
     public void deleteUser(OAuth2User principal) {
         String kakaoId = getKakaoId(principal);
-
+        if (kakaoId == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
             throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
         }
 
         user.setDeletedAt(LocalDateTime.now());
+    }
+
+    public UserStatusResponse getUserStatus(OAuth2User principal) {
+        if (principal == null) {
+            return new UserStatusResponse(false, null);
+        }
+
+        String kakaoId = getKakaoId(principal);
+        if (kakaoId == null) {
+            return new UserStatusResponse(false, null);
+        }
+
+        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
+        if (user == null) {
+            return new UserStatusResponse(false, null);
+        }
+
+        return new UserStatusResponse(true, user.getNickname());
     }
 
 }

@@ -1,6 +1,5 @@
 package com.yeo_li.yeol_post.domain.image;
 
-import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
 import com.yeo_li.yeol_post.domain.image.dto.ImageUploadResponse;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import java.util.concurrent.TimeUnit;
@@ -22,8 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/images")
 @RequiredArgsConstructor
 public class ImageController {
-
-    private final AuthorizationService authorizationService;
+    
     private final ImageService imageService;
 
     @PostMapping

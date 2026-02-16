@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.domain.user;
+package com.yeo_li.yeol_post.domain.user.service;
 
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;

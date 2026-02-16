@@ -1,16 +1,15 @@
-package com.yeo_li.yeol_post.domain.user;
+package com.yeo_li.yeol_post.domain.user.controller;
 
-import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
 import com.yeo_li.yeol_post.domain.post.dto.response.UserNicknameAvailabilityResponse;
-import com.yeo_li.yeol_post.domain.user.domain.User;
-import com.yeo_li.yeol_post.domain.user.dto.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
+import com.yeo_li.yeol_post.domain.user.service.UserService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,33 +28,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final AuthorizationService authorizationService;
     private final UserService userService;
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
-        if (principal == null) {
-            return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(Map.of(
-                    "isLoggedIn", false
-                ));
-        }
+    public ResponseEntity<ApiResponse<UserStatusResponse>> getCurrentUser(
+        @AuthenticationPrincipal OAuth2User principal) {
 
-        Map<String, Object> attributes = principal.getAttributes();
-        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
-        Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
-        String nickname = (String) profile.get("nickname");
+        UserStatusResponse response = userService.getUserStatus(principal);
 
-        authorizationService.validateUserAccess(String.valueOf(attributes.get("id")));
-
-        User user = userService.findUserByKakaoId(String.valueOf(attributes.get("id")));
-
-        return ResponseEntity.ok(Map.of(
-            "nickname", nickname,
-            "user_id", user.getId(),
-            "isLoggedIn", true
-        ));
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     @PatchMapping("/me")

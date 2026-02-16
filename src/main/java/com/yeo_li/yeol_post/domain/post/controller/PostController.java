@@ -1,6 +1,6 @@
 package com.yeo_li.yeol_post.domain.post.controller;
 
-import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
+
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
@@ -36,8 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Post", description = "게시물 관련 API")
 public class PostController {
-
-    private final AuthorizationService authorizationService;
+    
     private final PostService postService;
     private final PostCommandFactory postCommandFactory;
 

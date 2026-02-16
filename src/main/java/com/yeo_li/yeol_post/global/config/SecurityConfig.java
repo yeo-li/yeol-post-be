@@ -1,6 +1,6 @@
 package com.yeo_li.yeol_post.global.config;
 
-import com.yeo_li.yeol_post.domain.user.UserOAuth2UserService;
+import com.yeo_li.yeol_post.domain.user.service.UserOAuth2UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

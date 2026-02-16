@@ -1,6 +1,5 @@
 package com.yeo_li.yeol_post.domain.category;
 
-import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
 import com.yeo_li.yeol_post.domain.category.dto.request.CategoryCreateRequest;
 import com.yeo_li.yeol_post.domain.category.dto.request.CategoryUpdateRequest;
 import com.yeo_li.yeol_post.domain.category.dto.response.CategoryRecentResponse;
@@ -24,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
 public class CategoryController {
-
-    private final AuthorizationService authorizationService;
 
     private final CategoryService categoryService;
 

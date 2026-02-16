@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.domain.user.dto;
+package com.yeo_li.yeol_post.domain.user.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
