@@ -40,7 +40,7 @@ class UserServiceTest {
         void updateUser_사용자가_존재하지_않으면_리소스없음_예외를_발생시킨다() {
             // given
             when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-1"));
-            when(userRepository.findUserByKakaoId("kakao-1")).thenReturn(null);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-1")).thenReturn(null);
 
             UserUpdateRequest request = new UserUpdateRequest("nick", "user@test.com", true);
 
@@ -61,7 +61,7 @@ class UserServiceTest {
             user.setNickname("oldNick");
             user.setEmail(null);
             user.setEmailOptIn(false);
-            when(userRepository.findUserByKakaoId("kakao-2")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-2")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("newNick", "new@test.com", true);
 
@@ -82,7 +82,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-3");
             user.setOnboardingCompletedAt(null);
-            when(userRepository.findUserByKakaoId("kakao-3")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-3")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("nick", null, true);
 
@@ -100,7 +100,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-5");
             user.setOnboardingCompletedAt(null);
-            when(userRepository.findUserByKakaoId("kakao-5")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-5")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest(null, "user@test.com", true);
 
@@ -118,7 +118,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-6");
             user.setOnboardingCompletedAt(null);
-            when(userRepository.findUserByKakaoId("kakao-6")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-6")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("nick", "user@test.com", null);
 
@@ -160,7 +160,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-7");
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
-            when(userRepository.findUserByKakaoId("kakao-7")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-7")).thenReturn(user);
 
             // when & then
             assertThatThrownBy(() -> userService.updateUser(principal, null))
@@ -176,7 +176,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-8");
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
-            when(userRepository.findUserByKakaoId("kakao-8")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-8")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest(null, "invalid-email", null);
 
@@ -194,7 +194,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-9");
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
-            when(userRepository.findUserByKakaoId("kakao-9")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-9")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("   ", null, null);
 
@@ -212,7 +212,7 @@ class UserServiceTest {
 
             User user = createUser("kakao-10");
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
-            when(userRepository.findUserByKakaoId("kakao-10")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-10")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("12345678901", null, null);
 
@@ -231,11 +231,12 @@ class UserServiceTest {
             User user = createUser("kakao-11");
             user.setId(1L);
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
-            when(userRepository.findUserByKakaoId("kakao-11")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-11")).thenReturn(user);
 
             User duplicatedUser = createUser("kakao-12");
             duplicatedUser.setId(2L);
-            when(userRepository.findUserByNickname("dupNick")).thenReturn(duplicatedUser);
+            when(userRepository.findUserByNicknameAndDeletedAtIsNull("dupNick")).thenReturn(
+                duplicatedUser);
 
             UserUpdateRequest request = new UserUpdateRequest("dupNick", null, null);
 
@@ -256,7 +257,7 @@ class UserServiceTest {
             user.setNickname("oldNick");
             user.setEmail("old@test.com");
             user.setEmailOptIn(false);
-            when(userRepository.findUserByKakaoId("kakao-4")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-4")).thenReturn(user);
 
             UserUpdateRequest request = new UserUpdateRequest("newNick", null, null);
 
@@ -278,9 +279,10 @@ class UserServiceTest {
             user.setOnboardingCompletedAt(LocalDateTime.now().minusDays(1));
             user.setNickname("oldNick");
             user.setEmail("old@test.com");
-            when(userRepository.findUserByKakaoId("kakao-12")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-12")).thenReturn(user);
 
-            UserUpdateRequest request = new UserUpdateRequest("  newNick  ", "  new@test.com  ", null);
+            UserUpdateRequest request = new UserUpdateRequest("  newNick  ", "  new@test.com  ",
+                null);
 
             // when
             userService.updateUser(principal, request);
@@ -297,9 +299,10 @@ class UserServiceTest {
 
             User user = createUser("kakao-13");
             user.setOnboardingCompletedAt(null);
-            when(userRepository.findUserByKakaoId("kakao-13")).thenReturn(user);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-13")).thenReturn(user);
 
-            UserUpdateRequest request = new UserUpdateRequest("  newNick  ", "  new@test.com  ", true);
+            UserUpdateRequest request = new UserUpdateRequest("  newNick  ", "  new@test.com  ",
+                true);
 
             // when
             userService.updateUser(principal, request);
@@ -309,6 +312,60 @@ class UserServiceTest {
             assertThat(user.getEmail()).isEqualTo("new@test.com");
             assertThat(user.getEmailOptIn()).isTrue();
             assertThat(user.getOnboardingCompletedAt()).isNotNull();
+        }
+    }
+
+    @Nested
+    class DeleteUserTest {
+
+        @Test
+        void deleteUser_사용자가_존재하면_deletedAt을_설정한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-delete-1"));
+
+            User user = createUser("kakao-delete-1");
+            user.setDeletedAt(null);
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-delete-1")).thenReturn(
+                user);
+
+            // when
+            userService.deleteUser(principal);
+
+            // then
+            assertThat(user.getDeletedAt()).isNotNull();
+        }
+
+        @Test
+        void deleteUser_사용자가_존재하지_않으면_사용자없음_예외를_발생시킨다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-delete-2"));
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-delete-2")).thenReturn(
+                null);
+
+            // when & then
+            assertThatThrownBy(() -> userService.deleteUser(principal))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(UserExceptionType.USER_NOT_FOUND));
+        }
+
+        @Test
+        void deleteUser_principal에_id가_없으면_인증식별자누락_예외를_발생시킨다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("sub", "no-id"));
+
+            // when & then
+            assertThatThrownBy(() -> userService.deleteUser(principal))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(UserExceptionType.USER_OAUTH2_ID_MISSING));
+        }
+
+        @Test
+        void deleteUser_principal이_null이면_NullPointerException을_발생시킨다() {
+            // when & then
+            assertThatThrownBy(() -> userService.deleteUser(null))
+                .isInstanceOf(NullPointerException.class);
         }
     }
 
