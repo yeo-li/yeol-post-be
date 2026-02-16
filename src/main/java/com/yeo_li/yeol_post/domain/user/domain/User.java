@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.domain.user.domain;
 
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
@@ -8,10 +9,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -41,10 +44,6 @@ public class User extends BaseTimeEntity {
     @Email
     private String email;
 
-    @NotNull
-    @Column(name = "email_opt_in", nullable = false)
-    private Boolean emailOptIn = false;
-
     @Column(name = "onboarding_completed_at")
     private LocalDateTime onboardingCompletedAt;
 
@@ -58,4 +57,7 @@ public class User extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private Subscription subscription;
 }

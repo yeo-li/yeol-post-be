@@ -61,7 +61,7 @@ public class UserService {
             user.setEmail(normalizedRequest.email());
         }
         if (normalizedRequest.emailOptIn() != null) {
-            user.setEmailOptIn(normalizedRequest.emailOptIn());
+            // todo : subscription 구독 설정으로 바꾸기
         }
     }
 
@@ -73,7 +73,6 @@ public class UserService {
 
         user.setNickname(request.nickname());
         user.setEmail(request.email());
-        user.setEmailOptIn(request.emailOptIn());
         user.setOnboardingCompletedAt(LocalDateTime.now());
     }
 

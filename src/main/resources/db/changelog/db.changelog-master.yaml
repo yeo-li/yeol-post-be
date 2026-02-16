@@ -19,3 +19,7 @@ databaseChangeLog:
       file: db/changelog/v1_0/009-add-user-deleted-at-column.yaml
   - include:
       file: db/changelog/v1_0/010-make-user-nickname-nullable.yaml
+  - include:
+      file: db/changelog/v1_0/011-add-subscription-user-relation.yaml
+  - include:
+      file: db/changelog/v1_0/012-change-subscription-status-to-string.yaml
