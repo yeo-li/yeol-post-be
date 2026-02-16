@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.domain.user;
 
 import com.yeo_li.yeol_post.domain.auth.AuthorizationService;
+import com.yeo_li.yeol_post.domain.post.dto.response.UserNicknameAvailabilityResponse;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.UserUpdateRequest;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -62,4 +64,13 @@ public class UserController {
             .body(ApiResponse.onSuccess());
     }
 
+    @GetMapping("/nickname-availability")
+    public ResponseEntity<ApiResponse<UserNicknameAvailabilityResponse>> checkNicknameAvailability(
+        @RequestParam("nickname") String nickname
+    ) {
+        boolean duplicated = userService.isDuplicatedNickname(nickname.trim());
+        return ResponseEntity.ok(
+            ApiResponse.onSuccess(new UserNicknameAvailabilityResponse(!duplicated))
+        );
+    }
 }
