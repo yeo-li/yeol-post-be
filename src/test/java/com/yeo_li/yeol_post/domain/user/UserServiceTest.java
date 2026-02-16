@@ -6,9 +6,11 @@ import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
-import com.yeo_li.yeol_post.domain.user.dto.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
+import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
+import com.yeo_li.yeol_post.domain.user.service.UserService;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.time.LocalDateTime;
@@ -366,6 +368,65 @@ class UserServiceTest {
             // when & then
             assertThatThrownBy(() -> userService.deleteUser(null))
                 .isInstanceOf(NullPointerException.class);
+        }
+    }
+
+    @Nested
+    class GetUserStatusTest {
+
+        @Test
+        void getUserStatus_principal이_null이면_로그인하지않음_상태를_반환한다() {
+            // when
+            UserStatusResponse response = userService.getUserStatus(null);
+
+            // then
+            assertThat(response.isLoggedIn()).isFalse();
+            assertThat(response.nickname()).isNull();
+        }
+
+        @Test
+        void getUserStatus_principal에_id가_없으면_로그인하지않음_상태를_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("sub", "no-id"));
+
+            // when
+            UserStatusResponse response = userService.getUserStatus(principal);
+
+            // then
+            assertThat(response.isLoggedIn()).isFalse();
+            assertThat(response.nickname()).isNull();
+        }
+
+        @Test
+        void getUserStatus_사용자가_존재하지_않으면_로그인하지않음_상태를_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-status-1"));
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-status-1")).thenReturn(
+                null);
+
+            // when
+            UserStatusResponse response = userService.getUserStatus(principal);
+
+            // then
+            assertThat(response.isLoggedIn()).isFalse();
+            assertThat(response.nickname()).isNull();
+        }
+
+        @Test
+        void getUserStatus_사용자가_존재하면_로그인됨_상태와_닉네임을_반환한다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-status-2"));
+            User user = createUser("kakao-status-2");
+            user.setNickname("testerNick");
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-status-2")).thenReturn(
+                user);
+
+            // when
+            UserStatusResponse response = userService.getUserStatus(principal);
+
+            // then
+            assertThat(response.isLoggedIn()).isTrue();
+            assertThat(response.nickname()).isEqualTo("testerNick");
         }
     }
 
