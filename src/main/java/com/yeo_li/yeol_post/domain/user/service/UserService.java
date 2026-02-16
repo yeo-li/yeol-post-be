@@ -234,20 +234,20 @@ public class UserService {
 
     public UserStatusResponse getUserStatus(OAuth2User principal) {
         if (principal == null) {
-            return new UserStatusResponse(false, null);
+            return new UserStatusResponse(false, null, false);
         }
 
         String kakaoId = getKakaoId(principal);
         if (kakaoId == null) {
-            return new UserStatusResponse(false, null);
+            return new UserStatusResponse(false, null, false);
         }
 
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
-            return new UserStatusResponse(false, null);
+            return new UserStatusResponse(false, null, false);
         }
-
-        return new UserStatusResponse(true, user.getNickname());
+        boolean isOnboardingComplete = user.getOnboardingCompletedAt() != null;
+        return new UserStatusResponse(true, user.getNickname(), isOnboardingComplete);
     }
 
 }

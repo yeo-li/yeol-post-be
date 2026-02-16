@@ -2,7 +2,8 @@ package com.yeo_li.yeol_post.domain.user.dto.response;
 
 public record UserStatusResponse(
     boolean isLoggedIn,
-    String nickname
+    String nickname,
+    boolean isOnboardingComplete
 ) {
 
 }

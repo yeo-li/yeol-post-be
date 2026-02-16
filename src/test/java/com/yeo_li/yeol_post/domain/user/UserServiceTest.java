@@ -407,6 +407,7 @@ class UserServiceTest {
             // then
             assertThat(response.isLoggedIn()).isFalse();
             assertThat(response.nickname()).isNull();
+            assertThat(response.isOnboardingComplete()).isFalse();
         }
 
         @Test
@@ -420,6 +421,7 @@ class UserServiceTest {
             // then
             assertThat(response.isLoggedIn()).isFalse();
             assertThat(response.nickname()).isNull();
+            assertThat(response.isOnboardingComplete()).isFalse();
         }
 
         @Test
@@ -435,6 +437,7 @@ class UserServiceTest {
             // then
             assertThat(response.isLoggedIn()).isFalse();
             assertThat(response.nickname()).isNull();
+            assertThat(response.isOnboardingComplete()).isFalse();
         }
 
         @Test
@@ -443,6 +446,7 @@ class UserServiceTest {
             when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-status-2"));
             User user = createUser("kakao-status-2");
             user.setNickname("testerNick");
+            user.setOnboardingCompletedAt(LocalDateTime.now());
             when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-status-2")).thenReturn(
                 user);
 
@@ -452,6 +456,7 @@ class UserServiceTest {
             // then
             assertThat(response.isLoggedIn()).isTrue();
             assertThat(response.nickname()).isEqualTo("testerNick");
+            assertThat(response.isOnboardingComplete()).isTrue();
         }
     }
 
