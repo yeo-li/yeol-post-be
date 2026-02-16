@@ -2,6 +2,8 @@ package com.yeo_li.yeol_post.domain.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.user.domain.Role;
@@ -10,6 +12,7 @@ import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserStatusResponse;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
+import com.yeo_li.yeol_post.domain.user.service.KakaoUnlinkService;
 import com.yeo_li.yeol_post.domain.user.service.UserService;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
@@ -31,6 +34,9 @@ class UserServiceTest {
 
     @Mock
     private OAuth2User principal;
+
+    @Mock
+    private KakaoUnlinkService kakaoUnlinkService;
 
     @InjectMocks
     private UserService userService;
@@ -331,10 +337,11 @@ class UserServiceTest {
                 user);
 
             // when
-            userService.deleteUser(principal);
+            userService.deleteUser(principal, "access-token");
 
             // then
             assertThat(user.getDeletedAt()).isNotNull();
+            verify(kakaoUnlinkService).unlink("access-token");
         }
 
         @Test
@@ -345,10 +352,11 @@ class UserServiceTest {
                 null);
 
             // when & then
-            assertThatThrownBy(() -> userService.deleteUser(principal))
+            assertThatThrownBy(() -> userService.deleteUser(principal, "access-token"))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(UserExceptionType.USER_NOT_FOUND));
+            verify(kakaoUnlinkService, never()).unlink("access-token");
         }
 
         @Test
@@ -357,17 +365,19 @@ class UserServiceTest {
             when(principal.getAttributes()).thenReturn(Map.of("sub", "no-id"));
 
             // when & then
-            assertThatThrownBy(() -> userService.deleteUser(principal))
+            assertThatThrownBy(() -> userService.deleteUser(principal, "access-token"))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(UserExceptionType.USER_OAUTH2_ID_MISSING));
+            verify(kakaoUnlinkService, never()).unlink("access-token");
         }
 
         @Test
         void deleteUser_principal이_null이면_NullPointerException을_발생시킨다() {
             // when & then
-            assertThatThrownBy(() -> userService.deleteUser(null))
+            assertThatThrownBy(() -> userService.deleteUser(null, "access-token"))
                 .isInstanceOf(NullPointerException.class);
+            verify(kakaoUnlinkService, never()).unlink("access-token");
         }
     }
 

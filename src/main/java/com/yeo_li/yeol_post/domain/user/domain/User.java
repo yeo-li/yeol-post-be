@@ -35,7 +35,6 @@ public class User extends BaseTimeEntity {
     @NotNull
     private String name;
 
-    @NotNull
     @Column(length = 10)
     private String nickname;
 

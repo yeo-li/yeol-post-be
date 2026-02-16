@@ -23,6 +23,7 @@ public class UserService {
         "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final UserRepository userRepository;
+    private final KakaoUnlinkService kakaoUnlinkService;
 
     public User findUserByKakaoId(String kakaoId) {
         return userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
@@ -121,7 +122,7 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(OAuth2User principal) {
+    public void deleteUser(OAuth2User principal, String kakaoAccessToken) {
         String kakaoId = getKakaoId(principal);
         if (kakaoId == null) {
             throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
@@ -131,6 +132,7 @@ public class UserService {
             throw new GeneralException(UserExceptionType.USER_NOT_FOUND);
         }
 
+        kakaoUnlinkService.unlink(kakaoAccessToken);
         user.setDeletedAt(LocalDateTime.now());
     }
 

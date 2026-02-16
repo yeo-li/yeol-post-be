@@ -1,10 +1,14 @@
 package com.yeo_li.yeol_post.domain.user.service;
 
+import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,6 +26,7 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
 
     private final UserRepository userRepository;
 
+    @Transactional
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         // 기본 사용자 정보 조회
@@ -32,11 +37,31 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
             throw new OAuth2AuthenticationException(
                 UserExceptionType.USER_OAUTH2_ID_MISSING.getMessage());
         }
-        String kakaoId = String.valueOf(oauth2User.getAttributes().get("id"));
 
-        // 우리 DB에 등록된 사용자 찾기
-        User user = userRepository.findByKakaoIdAndDeletedAtIsNull(kakaoId)
-            .orElseThrow(() -> new OAuth2AuthenticationException("가입된 사용자가 아닙니다."));
+        Map<String, Object> attributes = oauth2User.getAttributes();
+
+        String kakaoId = String.valueOf(attributes.get("id"));
+        Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+        Map<String, Object> profile =
+            kakaoAccount == null ? null : (Map<String, Object>) kakaoAccount.get("profile");
+        String nickname =
+            profile == null ? "사용자" + UUID.randomUUID() : (String) profile.get("nickname");
+
+        User user = userRepository.findUserByKakaoId(kakaoId);
+
+        if (user == null) {
+            User newUser = new User();
+            newUser.setKakaoId(kakaoId);
+            newUser.setName(nickname);
+            newUser.setRole(Role.USER);
+            user = userRepository.save(newUser);
+        }
+
+        if (user.getDeletedAt() != null) {
+            user.setOnboardingCompletedAt(null);
+            user.setDeletedAt(null);
+            user.setRole(Role.USER);
+        }
 
         Collection<GrantedAuthority> authorities = List.of(
             new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
@@ -47,7 +72,6 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
             .getUserInfoEndpoint()
             .getUserNameAttributeName();
 
-        // CustomUserDetails 또는 그냥 oauth2User 반환 가능
         return new DefaultOAuth2User(authorities, oauth2User.getAttributes(),
             userNameAttributeName);
     }

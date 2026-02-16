@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,10 +66,14 @@ public class UserController {
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Object>> deleteUser(
         @AuthenticationPrincipal OAuth2User principal,
+        @RegisteredOAuth2AuthorizedClient("kakao") OAuth2AuthorizedClient authorizedClient,
         HttpServletRequest request,
         HttpServletResponse response
     ) throws ServletException {
-        userService.deleteUser(principal);
+        String kakaoAccessToken = authorizedClient == null || authorizedClient.getAccessToken() == null
+            ? null
+            : authorizedClient.getAccessToken().getTokenValue();
+        userService.deleteUser(principal, kakaoAccessToken);
 
         request.logout();
         HttpSession session = request.getSession(false);
