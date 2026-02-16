@@ -10,7 +10,9 @@ import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.ListPostResponseApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.VoidApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,6 +48,27 @@ public class PostController {
             description = "저장 성공"
             , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
     })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "게시물 생성 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "title": "Spring Security 권한 처리",
+                  "summary": "hasRole과 authority 차이",
+                  "author": "yeoli",
+                  "content": "본문 내용",
+                  "user_id": 1,
+                  "category_id": 2,
+                  "tags": [
+                    "spring",
+                    "security"
+                  ]
+                }
+                """)
+        )
+    )
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> savePost(
         @RequestBody @Valid PostCreateRequest request) {
@@ -65,6 +88,7 @@ public class PostController {
     })
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByQueryString(
+        @Parameter(description = "검색 파라미터(title, tag, category, author, limit, is_published)", example = "title=Spring Security")
         @RequestParam(required = false) Map<String, String> params) {
         // TODO: sibal refactoring
         List<PostResponse> postResponses = new ArrayList<>();
@@ -98,8 +122,17 @@ public class PostController {
 
     }
 
+    @Operation(summary = "게시물 삭제", description = "게시물 ID로 게시물을 삭제합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
+            description = "삭제 성공"
+            , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
+    })
     @DeleteMapping("/{postId}")
-    public ResponseEntity<?> deletePost(@PathVariable("postId") Long postId) {
+    public ResponseEntity<?> deletePost(
+        @Parameter(description = "삭제할 게시물 ID", example = "10")
+        @PathVariable("postId") Long postId
+    ) {
 
         postService.deletePostByPostId(postId);
 
@@ -108,8 +141,36 @@ public class PostController {
             .body(ApiResponse.onSuccess());
     }
 
+    @Operation(summary = "게시물 수정", description = "게시물 정보를 수정합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
+            description = "수정 성공"
+            , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "게시물 수정 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "title": "Spring Security 권한 처리 (수정)",
+                  "summary": "수정된 요약",
+                  "author": "yeoli",
+                  "content": "수정 본문",
+                  "category_id": 2,
+                  "tags": [
+                    "spring",
+                    "security",
+                    "authorization"
+                  ]
+                }
+                """)
+        )
+    )
     @PatchMapping("/{postId}")
     public ResponseEntity<ApiResponse<Void>> updatePost(
+        @Parameter(description = "수정할 게시물 ID", example = "10")
         @PathVariable("postId") Long postId,
         @RequestBody PostUpdateRequest request) {
 
@@ -121,8 +182,14 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 조회수 증가", description = "게시물 조회수를 1 증가시킵니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
+            description = "조회수 증가 성공"
+            , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
+    })
     @PostMapping("/{postId}/views")
     public ResponseEntity<ApiResponse<Void>> increaseViews(
+        @Parameter(description = "조회수 증가 대상 게시물 ID", example = "10")
         @PathVariable("postId") Long postId
     ) {
         postService.increaseViewCount(postId);

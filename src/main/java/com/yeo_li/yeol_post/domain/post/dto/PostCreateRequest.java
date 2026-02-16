@@ -20,10 +20,10 @@ public record PostCreateRequest(
     @Schema(description = "게시물 작성 사용자 ID", example = "1")
     @NotNull
     @JsonProperty("user_id") Long userId,
-    @Schema(description = "게시물에 지정된 카테고리 ID", example = "Spring")
+    @Schema(description = "게시물에 지정된 카테고리 ID", example = "2")
     @JsonProperty("category_id")
     Long categoryId,
-    @Schema(description = "게시물의 태그 목록", example = "[\"tag1\", \"tag2\"], \"tag3\"")
+    @Schema(description = "게시물의 태그 목록", example = "[\"spring\", \"security\"]")
     List<String> tags) {
 
 }

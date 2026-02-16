@@ -31,10 +31,6 @@ public class UserService {
     private final SubscriptionService subscriptionService;
     private final NewsLetterService newsLetterService;
 
-    public User findUserByKakaoId(String kakaoId) {
-        return userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
-    }
-
     public boolean isDuplicatedNickname(String nickname) {
         User duplicatedUser = userRepository.findUserByNicknameAndDeletedAtIsNull(nickname);
         return duplicatedUser != null;
@@ -234,20 +230,21 @@ public class UserService {
 
     public UserStatusResponse getUserStatus(OAuth2User principal) {
         if (principal == null) {
-            return new UserStatusResponse(false, null, false);
+            return new UserStatusResponse(false, null, false, null);
         }
 
         String kakaoId = getKakaoId(principal);
         if (kakaoId == null) {
-            return new UserStatusResponse(false, null, false);
+            return new UserStatusResponse(false, null, false, null);
         }
 
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
-            return new UserStatusResponse(false, null, false);
+            return new UserStatusResponse(false, null, false, null);
         }
         boolean isOnboardingComplete = user.getOnboardingCompletedAt() != null;
-        return new UserStatusResponse(true, user.getNickname(), isOnboardingComplete);
+        return new UserStatusResponse(true, user.getNickname(), isOnboardingComplete,
+            user.getRole());
     }
 
 }

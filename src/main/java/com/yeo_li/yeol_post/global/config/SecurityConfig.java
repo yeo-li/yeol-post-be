@@ -40,7 +40,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**", "/logout",
-                    "/error")
+                    "/error", "/swagger-ui/**", "/v3/api-docs/**") // todo: 여기 지워라
                 .permitAll() // public page
 
                 // public read endpoint
