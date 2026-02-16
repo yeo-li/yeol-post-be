@@ -32,9 +32,14 @@ public class UserService {
     private final SubscriptionService subscriptionService;
     private final NewsLetterService newsLetterService;
 
-    public boolean isDuplicatedNickname(String nickname) {
+    public boolean isDuplicatedNickname(OAuth2User principal, String nickname) {
+        String kakaoId = getKakaoId(principal);
+        if (kakaoId == null) {
+            throw new GeneralException(UserExceptionType.USER_OAUTH2_ID_MISSING);
+        }
+
         User duplicatedUser = userRepository.findUserByNicknameAndDeletedAtIsNull(nickname);
-        return duplicatedUser != null;
+        return duplicatedUser != null && !duplicatedUser.getKakaoId().equals(kakaoId);
 
     }
 
@@ -58,6 +63,9 @@ public class UserService {
         }
 
         if (normalizedRequest.nickname() != null) {
+            if (isDuplicatedNickname(principal, normalizedRequest.nickname())) {
+                throw new GeneralException(UserExceptionType.USER_NICKNAME_DUPLICATED);
+            }
             user.setNickname(normalizedRequest.nickname());
         }
 
@@ -268,7 +276,8 @@ public class UserService {
             subscription = subscriptionService.getSubscriptionByEmail(user.getEmail());
         }
         boolean isSubscribed =
-            subscription != null && subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE;
+            subscription != null
+                && subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE;
 
         return new UserProfileResponse(
             user.getName(),

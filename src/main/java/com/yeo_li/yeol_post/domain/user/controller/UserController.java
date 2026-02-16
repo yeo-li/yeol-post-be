@@ -192,11 +192,12 @@ public class UserController {
     @GetMapping("/nickname-availability")
     public ResponseEntity<ApiResponse<UserNicknameAvailabilityResponse>> checkNicknameAvailability(
         @Parameter(description = "확인할 닉네임", example = "yeoli")
-        @RequestParam("nickname") String nickname
+        @RequestParam("nickname") String nickname,
+        @AuthenticationPrincipal OAuth2User principal
     ) {
-        boolean duplicated = userService.isDuplicatedNickname(nickname.trim());
+        boolean duplicated = userService.isDuplicatedNickname(principal, nickname.trim());
         return ResponseEntity.ok(
-            ApiResponse.onSuccess(new UserNicknameAvailabilityResponse(!duplicated))
+            ApiResponse.onSuccess(new UserNicknameAvailabilityResponse(duplicated))
         );
     }
 
