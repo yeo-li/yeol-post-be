@@ -1,7 +1,12 @@
 package com.yeo_li.yeol_post.global.config;
 
 import com.yeo_li.yeol_post.domain.user.service.UserOAuth2UserService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,14 +16,22 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final int ADMIN_SESSION_TIMEOUT_SECONDS = 60 * 60 * 12; // 12h
+    private static final int USER_SESSION_TIMEOUT_SECONDS = 60 * 60 * 24 * 30; // 30d
 
     @Value("${app.frontend.origin}")
     private String frontendOrigin;
@@ -27,20 +40,29 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookiePath("/");
+
         http
             .cors(cors -> cors
                 .configurationSource(corsFilter())
             )
-            .csrf(csrf ->
-                    csrf.disable()
-                // .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // XSRF-TOKEN 쿠키로 제공
-//             .ignoringRequestMatchers("/logout")
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository)
+                .ignoringRequestMatchers(
+                    // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/subscriptions/**"),
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
+                )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**", "/logout",
-                    "/error", "/swagger-ui/**", "/v3/api-docs/**") // todo: 여기 지워라
+                    "/error")
                 .permitAll() // public page
 
                 // public read endpoint
@@ -96,9 +118,20 @@ public class SecurityConfig {
             .oauth2Login(oauth2 ->
                 oauth2.userInfoEndpoint(userInfo -> userInfo.userService(userOAuth2UserService))
                     .successHandler((request, response, authentication) -> {
+                        HttpSession session = request.getSession(false);
+                        if (session != null && authentication != null) {
+                            boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+                            if (isAdmin) {
+                                session.setMaxInactiveInterval(ADMIN_SESSION_TIMEOUT_SECONDS);
+                            } else {
+                                session.setMaxInactiveInterval(USER_SESSION_TIMEOUT_SECONDS);
+                            }
+                        }
                         response.sendRedirect(frontendOrigin + "/login/success");
                     })
-            );
+            )
+            .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 
         return http.build();
     }
@@ -128,5 +161,18 @@ public class SecurityConfig {
         // 모든 경로에 위 CORS 설정 적용
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    private static final class CsrfCookieFilter extends OncePerRequestFilter {
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (csrfToken != null) {
+                csrfToken.getToken();
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 }
