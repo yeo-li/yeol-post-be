@@ -59,6 +59,7 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
 
         if (user.getDeletedAt() != null) {
             user.setOnboardingCompletedAt(null);
+            user.setName(nickname);
             user.setDeletedAt(null);
             user.setRole(Role.USER);
         }

@@ -4,6 +4,7 @@ import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
+import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.dto.request.UserUpdateRequest;
 import com.yeo_li.yeol_post.domain.user.dto.response.UserProfileResponse;
@@ -234,6 +235,11 @@ public class UserService {
         }
 
         kakaoUnlinkService.unlink(kakaoAccessToken);
+        user.setRole(Role.USER);
+        user.setName("알수없음");
+        user.setNickname(null);
+        user.setEmail(null);
+        user.setOnboardingCompletedAt(null);
         user.setDeletedAt(LocalDateTime.now());
     }
 

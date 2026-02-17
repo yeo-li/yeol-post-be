@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +20,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,6 +46,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookieName("XSRF-TOKEN");
+        csrfTokenRepository.setHeaderName("X-XSRF-TOKEN");
         csrfTokenRepository.setCookiePath("/");
 
         http
@@ -49,6 +56,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(csrfTokenRepository)
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                 .ignoringRequestMatchers(
                     // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
                     PathPatternRequestMatcher.withDefaults()
@@ -152,6 +160,7 @@ public class SecurityConfig {
                 "Cache-Control",
                 "Content-Type",
                 "X-XSRF-TOKEN",
+                "X-CSRF-TOKEN",
                 "X-Page-Url",
                 "X-Referer"
             ));
@@ -173,6 +182,29 @@ public class SecurityConfig {
                 csrfToken.getToken();
             }
             filterChain.doFilter(request, response);
+        }
+    }
+
+    private static final class SpaCsrfTokenRequestHandler extends
+        CsrfTokenRequestAttributeHandler {
+
+        private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
+        private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
+
+        @Override
+        public void handle(HttpServletRequest request, HttpServletResponse response,
+            Supplier<CsrfToken> csrfToken) {
+            this.xor.handle(request, response, csrfToken);
+            csrfToken.get();
+        }
+
+        @Override
+        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+            String csrfHeaderValue = request.getHeader(csrfToken.getHeaderName());
+            if (StringUtils.hasText(csrfHeaderValue)) {
+                return this.plain.resolveCsrfTokenValue(request, csrfToken);
+            }
+            return this.xor.resolveCsrfTokenValue(request, csrfToken);
         }
     }
 }
