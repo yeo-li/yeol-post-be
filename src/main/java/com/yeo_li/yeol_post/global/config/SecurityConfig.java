@@ -3,6 +3,7 @@ package com.yeo_li.yeol_post.global.config;
 import com.yeo_li.yeol_post.domain.user.service.UserOAuth2UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -12,18 +13,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.util.StringUtils;
@@ -35,23 +41,36 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private static final int ADMIN_SESSION_TIMEOUT_SECONDS = 60 * 60 * 12; // 12h
     private static final int USER_SESSION_TIMEOUT_SECONDS = 60 * 60 * 24 * 30; // 30d
+    private static final String XSRF_COOKIE_NAME = "XSRF-TOKEN";
+    private static final String XSRF_HEADER_NAME = "X-XSRF-TOKEN";
+    private static final String XSRF_ALT_HEADER_NAME = "X-CSRF-TOKEN";
+    private static final String XSRF_PARAMETER_NAME = "_csrf";
 
     @Value("${app.frontend.origin}")
     private String frontendOrigin;
+
+    @Value("${HOSTNAME:unknown}")
+    private String instanceId;
 
     private final UserOAuth2UserService userOAuth2UserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        csrfTokenRepository.setCookieName("XSRF-TOKEN");
-        csrfTokenRepository.setHeaderName("X-XSRF-TOKEN");
-        csrfTokenRepository.setCookiePath("/");
-        resolveCsrfCookieDomain().ifPresent(csrfTokenRepository::setCookieDomain);
+        AccessDeniedHandlerImpl defaultAccessDeniedHandler = new AccessDeniedHandlerImpl();
+
+        CookieCsrfTokenRepository cookieCsrfTokenRepository =
+            CookieCsrfTokenRepository.withHttpOnlyFalse();
+        cookieCsrfTokenRepository.setCookieName(XSRF_COOKIE_NAME);
+        cookieCsrfTokenRepository.setHeaderName(XSRF_HEADER_NAME);
+        cookieCsrfTokenRepository.setCookiePath("/");
+        resolveCsrfCookieDomain().ifPresent(cookieCsrfTokenRepository::setCookieDomain);
+        CsrfTokenRepository csrfTokenRepository =
+            new HeaderAwareCsrfTokenRepository(cookieCsrfTokenRepository);
 
         http
             .cors(cors -> cors
@@ -121,6 +140,14 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(exception -> exception
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    if (accessDeniedException instanceof CsrfException csrfException) {
+                        logCsrfFailure(request, csrfException);
+                    }
+                    defaultAccessDeniedHandler.handle(request, response, accessDeniedException);
+                })
+            )
             .logout(logout -> logout
                 .logoutUrl("/api/v1/logout")
                 .logoutSuccessHandler((request, response, authentication) -> {
@@ -153,6 +180,38 @@ public class SecurityConfig {
         return http.build();
     }
 
+    private void logCsrfFailure(HttpServletRequest request, CsrfException exception) {
+        String headerToken = request.getHeader(XSRF_HEADER_NAME);
+        String lowerHeaderToken = request.getHeader(XSRF_HEADER_NAME.toLowerCase());
+        String altHeaderToken = request.getHeader(XSRF_ALT_HEADER_NAME);
+        String xsrfCookie = findCookieValue(request, XSRF_COOKIE_NAME);
+        String sessionCookie = findCookieValue(request, "JSESSIONID");
+        long xsrfCookieCount = countCookie(request, XSRF_COOKIE_NAME);
+        CsrfToken expectedToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        String expected = expectedToken == null ? null : expectedToken.getToken();
+        boolean matchExpected = StringUtils.hasText(headerToken) && headerToken.equals(expected);
+        boolean matchCookie = StringUtils.hasText(headerToken) && headerToken.equals(xsrfCookie);
+
+        log.warn(
+            "CSRF denied instance={}, method={}, uri={}, origin={}, referer={}, xsrfHeader={}, xsrfHeaderLower={}, csrfHeader={}, expected={}, xsrfCookie={}, xsrfCookieCount={}, jsession={}, matchExpected={}, matchCookie={}. reason={}",
+            instanceId,
+            request.getMethod(),
+            request.getRequestURI(),
+            request.getHeader("Origin"),
+            request.getHeader("Referer"),
+            maskToken(headerToken),
+            maskToken(lowerHeaderToken),
+            maskToken(altHeaderToken),
+            maskToken(expected),
+            maskToken(xsrfCookie),
+            xsrfCookieCount,
+            maskToken(sessionCookie),
+            matchExpected,
+            matchCookie,
+            exception.getMessage()
+        );
+    }
+
     private Optional<String> resolveCsrfCookieDomain() {
         try {
             String host = URI.create(frontendOrigin).getHost();
@@ -163,6 +222,82 @@ public class SecurityConfig {
         } catch (IllegalArgumentException e) {
             return Optional.empty();
         }
+    }
+
+    private String findCookieValue(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (cookieName.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+    private long countCookie(HttpServletRequest request, String cookieName) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return 0L;
+        }
+
+        long count = 0L;
+        for (Cookie cookie : cookies) {
+            if (cookieName.equals(cookie.getName())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private String maskToken(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "null";
+        }
+        if (value.length() <= 10) {
+            return "***";
+        }
+        return value.substring(0, 6) + "***" + value.substring(value.length() - 4);
+    }
+
+    private String resolveRequestCsrfHeader(HttpServletRequest request) {
+        String headerToken = request.getHeader(XSRF_HEADER_NAME);
+        if (StringUtils.hasText(headerToken)) {
+            return headerToken;
+        }
+
+        String altHeaderToken = request.getHeader(XSRF_ALT_HEADER_NAME);
+        if (StringUtils.hasText(altHeaderToken)) {
+            return altHeaderToken;
+        }
+        return null;
+    }
+
+    private boolean hasCookieValue(HttpServletRequest request, String cookieName, String value) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return false;
+        }
+
+        for (Cookie cookie : cookies) {
+            if (cookieName.equals(cookie.getName()) && value.equals(cookie.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearLegacyHostOnlyXsrfCookie(HttpServletRequest request,
+        HttpServletResponse response) {
+        Cookie clearCookie = new Cookie(XSRF_COOKIE_NAME, "");
+        clearCookie.setPath("/");
+        clearCookie.setMaxAge(0);
+        clearCookie.setHttpOnly(false);
+        clearCookie.setSecure(request.isSecure());
+        response.addCookie(clearCookie);
     }
 
     @Bean
@@ -193,11 +328,15 @@ public class SecurityConfig {
         return source;
     }
 
-    private static final class CsrfCookieFilter extends OncePerRequestFilter {
+    private final class CsrfCookieFilter extends OncePerRequestFilter {
 
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+            if (countCookie(request, XSRF_COOKIE_NAME) > 1) {
+                clearLegacyHostOnlyXsrfCookie(request, response);
+            }
+
             CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
             if (csrfToken != null) {
                 csrfToken.getToken();
@@ -226,6 +365,46 @@ public class SecurityConfig {
                 return this.plain.resolveCsrfTokenValue(request, csrfToken);
             }
             return this.xor.resolveCsrfTokenValue(request, csrfToken);
+        }
+    }
+
+    private final class HeaderAwareCsrfTokenRepository implements CsrfTokenRepository {
+
+        private final CookieCsrfTokenRepository delegate;
+
+        private HeaderAwareCsrfTokenRepository(CookieCsrfTokenRepository delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public CsrfToken generateToken(HttpServletRequest request) {
+            return delegate.generateToken(request);
+        }
+
+        @Override
+        public void saveToken(CsrfToken token, HttpServletRequest request,
+            HttpServletResponse response) {
+            delegate.saveToken(token, request, response);
+        }
+
+        @Override
+        public CsrfToken loadToken(HttpServletRequest request) {
+            CsrfToken loadedToken = delegate.loadToken(request);
+            String headerToken = resolveRequestCsrfHeader(request);
+
+            if (!StringUtils.hasText(headerToken)) {
+                return loadedToken;
+            }
+            if (!hasCookieValue(request, XSRF_COOKIE_NAME, headerToken)) {
+                return loadedToken;
+            }
+            if (loadedToken != null && headerToken.equals(loadedToken.getToken())) {
+                return loadedToken;
+            }
+
+            String parameterName =
+                loadedToken == null ? XSRF_PARAMETER_NAME : loadedToken.getParameterName();
+            return new DefaultCsrfToken(XSRF_HEADER_NAME, parameterName, headerToken);
         }
     }
 }
