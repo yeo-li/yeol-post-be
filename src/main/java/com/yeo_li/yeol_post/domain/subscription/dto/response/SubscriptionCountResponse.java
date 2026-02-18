@@ -1,4 +1,4 @@
-package com.yeo_li.yeol_post.domain.subscription.dto;
+package com.yeo_li.yeol_post.domain.subscription.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

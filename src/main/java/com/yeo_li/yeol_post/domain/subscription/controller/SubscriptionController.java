@@ -1,7 +1,8 @@
 package com.yeo_li.yeol_post.domain.subscription.controller;
 
-import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
+import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionAnnounceRequest;
 import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionCreateRequest;
+import com.yeo_li.yeol_post.domain.subscription.dto.response.SubscriptionCountResponse;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -122,5 +123,14 @@ public class SubscriptionController {
         SubscriptionCountResponse response = subscriptionService.getSubscriptionCount();
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess(response));
+    }
+
+    @PostMapping("/announcements")
+    public ResponseEntity<ApiResponse<?>> sendAnnouncements(
+        @RequestBody @Valid SubscriptionAnnounceRequest request
+    ) {
+        subscriptionService.publishAnnouncementEvent(request);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 }
