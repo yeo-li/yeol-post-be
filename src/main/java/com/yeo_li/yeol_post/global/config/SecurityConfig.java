@@ -7,7 +7,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +51,7 @@ public class SecurityConfig {
         csrfTokenRepository.setCookieName("XSRF-TOKEN");
         csrfTokenRepository.setHeaderName("X-XSRF-TOKEN");
         csrfTokenRepository.setCookiePath("/");
+        resolveCsrfCookieDomain().ifPresent(csrfTokenRepository::setCookieDomain);
 
         http
             .cors(cors -> cors
@@ -148,6 +151,18 @@ public class SecurityConfig {
             .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 
         return http.build();
+    }
+
+    private Optional<String> resolveCsrfCookieDomain() {
+        try {
+            String host = URI.create(frontendOrigin).getHost();
+            if (host != null && host.endsWith(".yeo-li.com")) {
+                return Optional.of(".yeo-li.com");
+            }
+            return Optional.empty();
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
     @Bean
