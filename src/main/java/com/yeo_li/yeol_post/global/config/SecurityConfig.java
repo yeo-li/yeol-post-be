@@ -129,7 +129,8 @@ public class SecurityConfig {
                         HttpSession session = request.getSession(false);
                         if (session != null && authentication != null) {
                             boolean isAdmin = authentication.getAuthorities().stream()
-                                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+                                .anyMatch(
+                                    authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
                             if (isAdmin) {
                                 session.setMaxInactiveInterval(ADMIN_SESSION_TIMEOUT_SECONDS);
                             } else {

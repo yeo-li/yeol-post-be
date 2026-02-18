@@ -19,6 +19,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Draft", description = "임시저장 게시물 관련 API")
 public class DraftController {
-    
+
     private final PostService postService;
     private final DraftPostService draftPostService;
 
@@ -109,10 +111,11 @@ public class DraftController {
     )
     @PostMapping
     public ResponseEntity<ApiResponse<DraftPostCreateResponse>> savePost(
+        @AuthenticationPrincipal OAuth2User principal,
         @RequestBody @Valid PostCreateRequest request) {
 
         Long postId = draftPostService.createDraftPost(
-            postCommandFactory.createDraftPostCommand(request));
+            postCommandFactory.createDraftPostCommand(principal, request));
 
         return ResponseEntity
             .status(HttpStatus.OK)
