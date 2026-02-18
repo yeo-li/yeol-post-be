@@ -1,0 +1,227 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-drop-fk-post-admin
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: post }
+          - foreignKeyConstraintExists: { foreignKeyName: fk_post_admin }
+      changes:
+        - dropForeignKeyConstraint:
+            baseTableName: post
+            constraintName: fk_post_admin
+
+  - changeSet:
+      id: 009-rename-admin-table-to-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: admin }
+          - not:
+              - tableExists: { tableName: user }
+      changes:
+        - renameTable:
+            oldTableName: admin
+            newTableName: user
+
+  - changeSet:
+      id: 010-drop-user-username-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: user
+              columnName: username
+      changes:
+        - dropColumn:
+            tableName: user
+            columnName: username
+
+  - changeSet:
+      id: 011-drop-user-password-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: user
+              columnName: password
+      changes:
+        - dropColumn:
+            tableName: user
+            columnName: password
+
+  - changeSet:
+      id: 012-drop-user-is-deleted-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: user
+              columnName: is_deleted
+      changes:
+        - dropColumn:
+            tableName: user
+            columnName: is_deleted
+
+  - changeSet:
+      id: 013-add-user-role-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - not:
+              - columnExists:
+                  tableName: user
+                  columnName: role
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  defaultValue: ADMIN
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 014-rename-post-admin-id-to-user-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: post }
+          - columnExists:
+              tableName: post
+              columnName: admin_id
+          - not:
+              - columnExists:
+                  tableName: post
+                  columnName: user_id
+      changes:
+        - renameColumn:
+            tableName: post
+            oldColumnName: admin_id
+            newColumnName: user_id
+            columnDataType: BIGINT
+
+  - changeSet:
+      id: 015-drop-idx-post-admin-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        indexExists:
+          tableName: post
+          indexName: idx_post_admin_id
+      changes:
+        - dropIndex:
+            tableName: post
+            indexName: idx_post_admin_id
+
+  - changeSet:
+      id: 016-create-idx-post-user-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: post }
+          - columnExists:
+              tableName: post
+              columnName: user_id
+          - not:
+              - indexExists:
+                  tableName: post
+                  indexName: idx_post_user_id
+      changes:
+        - createIndex:
+            tableName: post
+            indexName: idx_post_user_id
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: 017-add-fk-post-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: post }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: post
+              columnName: user_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_post_user
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: post
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_post_user
+            onDelete: RESTRICT
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 018-add-user-email-opt-in-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - not:
+              - columnExists:
+                  tableName: user
+                  columnName: email_opt_in
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: email_opt_in
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 019-add-user-onboarding-completed-at-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - not:
+              - columnExists:
+                  tableName: user
+                  columnName: onboarding_completed_at
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: onboarding_completed_at
+                  type: DATETIME(6)

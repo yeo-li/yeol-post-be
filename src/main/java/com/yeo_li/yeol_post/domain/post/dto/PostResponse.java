@@ -46,6 +46,7 @@ public record PostResponse(
 
     @Schema(description = "게시물 카테고리")
     CategoryResponse category,
+    @Schema(description = "게시물 태그 목록", example = "[\"spring\", \"security\"]")
     List<String> tags
 ) {
 

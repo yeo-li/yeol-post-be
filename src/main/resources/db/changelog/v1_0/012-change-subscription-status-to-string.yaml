@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-modify-subscription-status-to-varchar
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: subscription }
+          - columnExists:
+              tableName: subscription
+              columnName: subscription_status
+      changes:
+        - modifyDataType:
+            tableName: subscription
+            columnName: subscription_status
+            newDataType: VARCHAR(20)
+
+  - changeSet:
+      id: 025-migrate-subscription-status-values
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: subscription }
+          - columnExists:
+              tableName: subscription
+              columnName: subscription_status
+      changes:
+        - sql:
+            sql: |
+              UPDATE subscription
+              SET subscription_status = 'SUBSCRIBE'
+              WHERE subscription_status = '0';
+        - sql:
+            sql: |
+              UPDATE subscription
+              SET subscription_status = 'UNSUBSCRIBE'
+              WHERE subscription_status = '1';

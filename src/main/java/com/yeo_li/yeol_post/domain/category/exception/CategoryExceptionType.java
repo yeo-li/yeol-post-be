@@ -10,7 +10,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum CategoryExceptionType implements BaseCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY404", "카테고리를 찾을 수 없습니다."),
-    ADMIN_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "CATEGORY400", ""),
+    USER_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "CATEGORY400", ""),
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "CATEGORY400", "유효하지 않은 카테고리입니다."),
     CATEGORY_NOT_DELETABLE(HttpStatus.CONFLICT, "CATEGORY409", "카테고리를 삭제할 수 없습니다.");
 

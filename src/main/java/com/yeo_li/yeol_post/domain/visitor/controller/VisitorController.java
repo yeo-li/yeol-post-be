@@ -5,6 +5,12 @@ import com.yeo_li.yeol_post.domain.visitor.dto.VisitorCommandFactory;
 import com.yeo_li.yeol_post.domain.visitor.dto.response.VisitorResponse;
 import com.yeo_li.yeol_post.domain.visitor.service.VisitorService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,15 +25,36 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/visitors")
 @RequiredArgsConstructor
+@Tag(name = "Visitor", description = "방문자 통계 API")
 public class VisitorController {
 
     private final VisitorService visitorService;
     private final VisitorCommandFactory visitorCommandFactory;
 
 
+    @Operation(summary = "방문 기록 저장", description = "접속 페이지 정보를 기반으로 방문 로그를 저장합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "저장 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": null
+                    }
+                    """)
+            )
+        )
+    })
     @GetMapping("/access")
     public ResponseEntity<ApiResponse<Void>> accessVisitor(
+        @Parameter(hidden = true)
         HttpServletRequest request,
+        @Parameter(description = "현재 방문한 페이지 URL", example = "https://yeol-post.com/posts/10")
         @RequestHeader(value = "X-Page-Url", required = false)
         String pageUrl) {
 
@@ -76,6 +103,27 @@ public class VisitorController {
         }
     }
 
+    @Operation(summary = "방문자 통계 조회", description = "누적 방문자 수와 오늘 방문자 수를 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": {
+                        "totalVisitorCount": 20240,
+                        "todayVisitorCount": 312
+                      }
+                    }
+                    """)
+            )
+        )
+    })
     @GetMapping
     public ResponseEntity<ApiResponse<VisitorResponse>> getVisitorCount() {
         VisitorResponse response = visitorService.getVisitorCount();
