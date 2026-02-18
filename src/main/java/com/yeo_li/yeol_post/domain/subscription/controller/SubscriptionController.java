@@ -1,7 +1,8 @@
 package com.yeo_li.yeol_post.domain.subscription.controller;
 
-import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
+import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionAnnounceRequest;
 import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionCreateRequest;
+import com.yeo_li.yeol_post.domain.subscription.dto.response.SubscriptionCountResponse;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -122,5 +123,45 @@ public class SubscriptionController {
         SubscriptionCountResponse response = subscriptionService.getSubscriptionCount();
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "공지 메일 발송", description = "구독자 전체에게 공지 메일 발송 이벤트를 발행합니다. (ADMIN 전용)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "발송 요청 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": null
+                    }
+                    """)
+            )
+        )
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "공지 메일 발송 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "title": "서비스 점검 안내",
+                  "content": "<h2>점검 일정</h2><p>2026-02-20 02:00~04:00 동안 서비스 점검이 진행됩니다.</p>"
+                }
+                """)
+        )
+    )
+    @PostMapping("/announcements")
+    public ResponseEntity<ApiResponse<?>> sendAnnouncements(
+        @RequestBody @Valid SubscriptionAnnounceRequest request
+    ) {
+        subscriptionService.publishAnnouncementEvent(request);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 }

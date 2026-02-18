@@ -2,13 +2,16 @@ package com.yeo_li.yeol_post.domain.subscription.service;
 
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.domain.SubscriptionStatus;
-import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
+import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionAnnounceRequest;
+import com.yeo_li.yeol_post.domain.subscription.dto.response.SubscriptionCountResponse;
+import com.yeo_li.yeol_post.domain.subscription.event.AnnouncementRequestedEvent;
 import com.yeo_li.yeol_post.domain.subscription.exception.SubscriptionType;
 import com.yeo_li.yeol_post.domain.subscription.facade.SubscriptionRepositoryFacade;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,8 @@ public class SubscriptionService {
 
     private final SubscriptionRepositoryFacade subscriptionRepositoryFacade;
     private final NewsLetterService newsLetterService;
+
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public Subscription saveSubscription(String email) {
@@ -84,5 +89,11 @@ public class SubscriptionService {
 
     public Subscription getSubscriptionByEmail(String email) {
         return subscriptionRepositoryFacade.findSubscriptionByEmail(email);
+    }
+
+    public void publishAnnouncementEvent(SubscriptionAnnounceRequest request) {
+        publisher.publishEvent(
+            new AnnouncementRequestedEvent(request.title(), request.content())
+        );
     }
 }

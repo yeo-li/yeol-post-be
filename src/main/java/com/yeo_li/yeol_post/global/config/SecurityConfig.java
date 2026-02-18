@@ -54,18 +54,20 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(corsFilter())
             )
-            .csrf(csrf -> csrf
-                .csrfTokenRepository(csrfTokenRepository)
-                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                .ignoringRequestMatchers(
-                    // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
-                    PathPatternRequestMatcher.withDefaults()
-                        .matcher(HttpMethod.POST, "/api/v1/subscriptions/**"),
-                    PathPatternRequestMatcher.withDefaults()
-                        .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
-                    PathPatternRequestMatcher.withDefaults()
-                        .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
-                )
+                .csrf(csrf -> csrf
+                    .csrfTokenRepository(csrfTokenRepository)
+                    .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                    .ignoringRequestMatchers(
+                        // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
+                        PathPatternRequestMatcher.withDefaults()
+                            .matcher(HttpMethod.POST, "/api/v1/subscriptions"),
+                        PathPatternRequestMatcher.withDefaults()
+                            .matcher(HttpMethod.POST, "/api/v1/subscriptions/"),
+                        PathPatternRequestMatcher.withDefaults()
+                            .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
+                        PathPatternRequestMatcher.withDefaults()
+                            .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
+                    )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -87,8 +89,11 @@ public class SecurityConfig {
                 ).permitAll()
 
                 // public write endpoint
+                .requestMatchers(HttpMethod.POST, "/api/v1/subscriptions/announcements")
+                .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST,
-                    "/api/v1/subscriptions/**",
+                    "/api/v1/subscriptions",
+                    "/api/v1/subscriptions/",
                     "/api/v1/visitors/access",
                     "/api/v1/posts/*/views"
                 ).permitAll()

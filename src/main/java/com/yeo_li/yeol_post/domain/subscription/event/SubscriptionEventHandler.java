@@ -2,9 +2,11 @@ package com.yeo_li.yeol_post.domain.subscription.event;
 
 import com.yeo_li.yeol_post.domain.post.dto.PostMailCommand;
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
+import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
@@ -22,5 +24,12 @@ public class SubscriptionEventHandler {
     public void handle(PostPublishedEvent event) {
         newsLetterService.sendPublishedPostMails(subscriptionService.getSubscribedEmail(),
             new PostMailCommand(event.postId(), event.title(), event.summary()));
+    }
+
+    @Async
+    @EventListener
+    public void handle(AnnouncementRequestedEvent event) {
+        newsLetterService.sendAnnouncements(subscriptionService.getSubscribedEmail(),
+            new AnnouncementMailCommand(event.title(), event.content()));
     }
 }
