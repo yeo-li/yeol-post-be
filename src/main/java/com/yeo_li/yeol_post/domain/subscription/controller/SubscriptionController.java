@@ -1,10 +1,18 @@
 package com.yeo_li.yeol_post.domain.subscription.controller;
 
-import com.yeo_li.yeol_post.domain.subscription.dto.SubscriptionCountResponse;
+import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionAnnounceRequest;
+import com.yeo_li.yeol_post.domain.subscription.dto.request.SubscriptionCreateRequest;
+import com.yeo_li.yeol_post.domain.subscription.dto.response.SubscriptionCountResponse;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,31 +25,143 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/subscriptions")
+@Tag(name = "Subscription", description = "이메일 구독 API")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
 
+    @Operation(summary = "이메일 구독", description = "이메일 뉴스레터 구독을 활성화합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "구독 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": null
+                    }
+                    """)
+            )
+        )
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "구독 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "email": "yeoli@example.com"
+                }
+                """)
+        )
+    )
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<?>> subscribe(@RequestBody Map<String, String> body) {
-
-        String email = body.get("email");
-        subscriptionService.subscribe(email);
+    public ResponseEntity<ApiResponse<?>> subscribe(
+        @RequestBody @Valid SubscriptionCreateRequest request
+    ) {
+        subscriptionService.subscribe(request.email());
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess());
     }
 
+    @Operation(summary = "이메일 구독 해지", description = "토큰을 이용해 이메일 구독을 해지합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "구독 해지 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": null
+                    }
+                    """)
+            )
+        )
+    })
     @GetMapping("/unsubscribe/{token}")
-    public ResponseEntity<ApiResponse<?>> unsubscribe(@PathVariable @NotNull String token) {
+    public ResponseEntity<ApiResponse<?>> unsubscribe(
+        @Parameter(description = "구독 해지 토큰", example = "7e805b3a-6d7b-4f1a-8f0d-f8d89d7f9d21")
+        @PathVariable @NotNull String token
+    ) {
 
         subscriptionService.unsubscribe(token);
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess());
     }
 
+    @Operation(summary = "구독자 수 조회", description = "현재 구독자 수를 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": {
+                        "count": 128
+                      }
+                    }
+                    """)
+            )
+        )
+    })
     @GetMapping("/count")
     public ResponseEntity<ApiResponse<SubscriptionCountResponse>> getSubscriptionsCount() {
         SubscriptionCountResponse response = subscriptionService.getSubscriptionCount();
 
         return ResponseEntity.ok().body(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "공지 메일 발송", description = "구독자 전체에게 공지 메일 발송 이벤트를 발행합니다. (ADMIN 전용)")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "발송 요청 성공",
+            content = @Content(
+                mediaType = "application/json",
+                examples = @ExampleObject(value = """
+                    {
+                      "is_success": true,
+                      "code": "GLOBAL200",
+                      "message": "성공했습니다.",
+                      "result": null
+                    }
+                    """)
+            )
+        )
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "공지 메일 발송 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "title": "서비스 점검 안내",
+                  "content": "<h2>점검 일정</h2><p>2026-02-20 02:00~04:00 동안 서비스 점검이 진행됩니다.</p>"
+                }
+                """)
+        )
+    )
+    @PostMapping("/announcements")
+    public ResponseEntity<ApiResponse<?>> sendAnnouncements(
+        @RequestBody @Valid SubscriptionAnnounceRequest request
+    ) {
+        subscriptionService.publishAnnouncementEvent(request);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 }

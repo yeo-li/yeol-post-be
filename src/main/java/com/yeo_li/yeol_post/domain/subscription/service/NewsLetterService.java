@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.domain.subscription.service;
 
 import com.yeo_li.yeol_post.domain.post.dto.PostMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +48,34 @@ public class NewsLetterService {
         mailService.sendHtmlMail(
             subscription.getEmail(),
             "[yeolpost] 새 글이 올라왔어요!",
+            html
+        );
+    }
+
+    public void sendAnnouncements(List<Subscription> subscriptions,
+        AnnouncementMailCommand command) {
+        for (Subscription subscription : subscriptions) {
+            try {
+                sendAnnouncement(subscription, command);
+            } catch (IOException | IllegalStateException e) {
+                log.error("{}발송 실패", subscription.getEmail(), e);
+            }
+        }
+    }
+
+    public void sendAnnouncement(Subscription subscription, AnnouncementMailCommand command)
+        throws IOException {
+        String html = StreamUtils.copyToString(
+                new ClassPathResource("mail/announcement.html").getInputStream(),
+                StandardCharsets.UTF_8
+            ).replace("{title}", command.title())
+            .replace("{frontendOrigin}", frontendOrigin)
+            .replace("{token}", subscription.getVerifyToken())
+            .replace("{content}", command.content());
+
+        mailService.sendHtmlMail(
+            subscription.getEmail(),
+            "[공지] " + command.title(),
             html
         );
     }

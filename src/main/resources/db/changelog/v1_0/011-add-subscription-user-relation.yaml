@@ -1,0 +1,82 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-add-subscription-user-id-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: subscription }
+          - not:
+              - columnExists:
+                  tableName: subscription
+                  columnName: user_id
+      changes:
+        - addColumn:
+            tableName: subscription
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+
+  - changeSet:
+      id: 021-add-uk-subscription-user-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: subscription }
+          - columnExists:
+              tableName: subscription
+              columnName: user_id
+          - not:
+              - uniqueConstraintExists:
+                  tableName: subscription
+                  constraintName: uk_subscription_user_id
+      changes:
+        - addUniqueConstraint:
+            tableName: subscription
+            columnNames: user_id
+            constraintName: uk_subscription_user_id
+
+  - changeSet:
+      id: 022-add-fk-subscription-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: subscription }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: subscription
+              columnName: user_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_subscription_user
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: subscription
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_subscription_user
+            onDelete: SET NULL
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 023-drop-user-email-opt-in-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: user
+              columnName: email_opt_in
+      changes:
+        - dropColumn:
+            tableName: user
+            columnName: email_opt_in

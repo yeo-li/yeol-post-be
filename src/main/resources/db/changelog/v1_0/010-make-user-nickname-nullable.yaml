@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-make-user-nickname-nullable
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: user
+              columnName: nickname
+      changes:
+        - dropNotNullConstraint:
+            tableName: user
+            columnName: nickname
+            columnDataType: VARCHAR(10)

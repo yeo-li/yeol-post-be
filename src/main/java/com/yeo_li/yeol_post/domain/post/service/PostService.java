@@ -5,7 +5,6 @@ import com.yeo_li.yeol_post.domain.category.CategoryService;
 import com.yeo_li.yeol_post.domain.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.domain.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
-import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
 import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
@@ -15,8 +14,6 @@ import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
 import com.yeo_li.yeol_post.domain.post_tag.PostTagService;
 import com.yeo_li.yeol_post.domain.streak.service.StreakService;
-import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
-import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.tag.Tag;
 import com.yeo_li.yeol_post.domain.tag.TagService;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
@@ -40,9 +37,6 @@ public class PostService {
     private final CategoryService categoryService;
     private final PostRepositoryFacade postRepositoryFacade;
     private final StreakService streakService;
-    private final NewsLetterService newsLetterService;
-    private final SubscriptionService subscriptionService;
-    private final PostCommandFactory postCommandFactory;
 
     private final ApplicationEventPublisher publisher;
 

@@ -1,8 +1,8 @@
 package com.yeo_li.yeol_post.domain.post.command;
 
-import com.yeo_li.yeol_post.domain.admin.domain.Admin;
 import com.yeo_li.yeol_post.domain.category.Category;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.domain.user.domain.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
@@ -18,7 +18,7 @@ public record DraftPostCreateCommand(
     @NotNull
     Boolean isPublished,
     LocalDateTime publishedAt,
-    Admin admin,
+    User user,
     Category category,
     List<String> tags,
     @NotNull
@@ -36,7 +36,7 @@ public record DraftPostCreateCommand(
         post.setIsPublished(false);
         post.setIsDeleted(this.isDeleted);
         post.setCategory(this.category);
-        post.setAdmin(this.admin);
+        post.setUser(this.user);
 
         return post;
     }
