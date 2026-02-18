@@ -157,7 +157,7 @@ public class SecurityConfig {
         try {
             String host = URI.create(frontendOrigin).getHost();
             if (host != null && host.endsWith(".yeo-li.com")) {
-                return Optional.of(".yeo-li.com");
+                return Optional.of("yeo-li.com");
             }
             return Optional.empty();
         } catch (IllegalArgumentException e) {
