@@ -8,6 +8,7 @@ import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
+import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +26,23 @@ public class LikeService {
 
 
     public LikeResponse getLikes(OAuth2User principal, Long postId) {
-        String kakaoId = getKakaoId(principal);
-        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
-        if (user == null) {
-            throw new GeneralException(LikeExceptionType.LIKE_USER_NOT_FOUND);
+        if (postId == null) {
+            throw new GeneralException(LikeExceptionType.LIKE_POST_ID_INVALID);
         }
 
-        boolean isLiked = likeRepository.existsLikesByPostIdAndUserId(postId, user.getId());
+        String kakaoId = getKakaoId(principal);
+        User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
+
+        boolean isLiked = false;
+        if (user != null) {
+            isLiked = likeRepository.existsLikesByPostIdAndUserId(postId, user.getId());
+        }
+
+        Post post = postRepository.findPostById(postId);
+        if (post == null) {
+            throw new GeneralException(LikeExceptionType.LIKE_POST_NOT_FOUND);
+        }
+
         int likes = likeRepository.countLikeByPostId(postId);
 
         return new LikeResponse(
@@ -45,7 +56,7 @@ public class LikeService {
         String kakaoId = getKakaoId(principal);
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
-            throw new GeneralException(LikeExceptionType.LIKE_USER_NOT_FOUND);
+            throw new GeneralException(ErrorStatus.UNAUTHORIZED);
         }
 
         boolean isLiked = likeRepository.existsLikesByPostIdAndUserId(postId, user.getId());
@@ -67,7 +78,7 @@ public class LikeService {
         String kakaoId = getKakaoId(principal);
         User user = userRepository.findUserByKakaoIdAndDeletedAtIsNull(kakaoId);
         if (user == null) {
-            throw new GeneralException(LikeExceptionType.LIKE_USER_NOT_FOUND);
+            throw new GeneralException(ErrorStatus.UNAUTHORIZED);
         }
 
         boolean isLiked = likeRepository.existsLikesByPostIdAndUserId(postId, user.getId());
@@ -79,6 +90,9 @@ public class LikeService {
     }
 
     private String getKakaoId(OAuth2User principal) {
+        if (principal == null) {
+            return null;
+        }
         Map<String, Object> attributes = principal.getAttributes();
         if (attributes.get("id") == null) {
             return null;
