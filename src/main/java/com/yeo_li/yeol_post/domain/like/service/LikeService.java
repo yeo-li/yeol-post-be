@@ -75,13 +75,7 @@ public class LikeService {
         if (!isLiked) {
             return;
         }
-
-        Post post = postRepository.findPostById(postId);
-        if (post == null) {
-            throw new GeneralException(LikeExceptionType.LIKE_POST_NOT_FOUND);
-        }
-
-        likeRepository.save(new Like(user, post));
+        likeRepository.deleteLikeByPostIdAndUserId(postId, user.getId());
     }
 
     private String getKakaoId(OAuth2User principal) {
