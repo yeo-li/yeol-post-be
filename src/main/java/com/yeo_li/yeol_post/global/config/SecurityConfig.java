@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfException;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -76,20 +76,20 @@ public class SecurityConfig {
             .cors(cors -> cors
                 .configurationSource(corsFilter())
             )
-                .csrf(csrf -> csrf
-                    .csrfTokenRepository(csrfTokenRepository)
-                    .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                    .ignoringRequestMatchers(
-                        // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
-                        PathPatternRequestMatcher.withDefaults()
-                            .matcher(HttpMethod.POST, "/api/v1/subscriptions"),
-                        PathPatternRequestMatcher.withDefaults()
-                            .matcher(HttpMethod.POST, "/api/v1/subscriptions/"),
-                        PathPatternRequestMatcher.withDefaults()
-                            .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
-                        PathPatternRequestMatcher.withDefaults()
-                            .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
-                    )
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(csrfTokenRepository)
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                .ignoringRequestMatchers(
+                    // 세션 인증과 무관한 공개 쓰기 API는 CSRF 예외 처리
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/subscriptions"),
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/subscriptions/"),
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
+                    PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
+                )
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -107,7 +107,8 @@ public class SecurityConfig {
                     "/api/v1/streaks",
                     "/api/v1/visitors/**",
                     "/api/v1/subscriptions/**",
-                    "/api/v1/users/me"
+                    "/api/v1/users/me",
+                    "/api/v1/likes/**"
                 ).permitAll()
 
                 // public write endpoint

@@ -23,3 +23,5 @@ databaseChangeLog:
       file: db/changelog/v1_0/011-add-subscription-user-relation.yaml
   - include:
       file: db/changelog/v1_0/012-change-subscription-status-to-string.yaml
+  - include:
+      file: db/changelog/v1_0/013-create-like-table.yaml
