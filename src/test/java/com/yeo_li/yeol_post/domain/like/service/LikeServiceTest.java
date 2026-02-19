@@ -18,6 +18,7 @@ import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
+import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.util.Map;
 import org.junit.jupiter.api.Nested;
@@ -51,25 +52,59 @@ class LikeServiceTest {
     class GetLikesTest {
 
         @Test
-        void getLikes_사용자가_존재하지_않으면_사용자없음_예외를_발생시킨다() {
-            // given
-            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-like-1"));
-            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-like-1")).thenReturn(null);
-
+        void getLikes_postId가_null이면_게시물아이디유효성_예외를_발생시킨다() {
             // when & then
-            assertThatThrownBy(() -> likeService.getLikes(principal, 1L))
+            assertThatThrownBy(() -> likeService.getLikes(principal, null))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
-                    .isEqualTo(LikeExceptionType.LIKE_USER_NOT_FOUND));
+                    .isEqualTo(LikeExceptionType.LIKE_POST_ID_INVALID));
+            verifyNoInteractions(userRepository, postRepository, likeRepository);
+        }
+
+        @Test
+        void getLikes_게시물이_존재하지_않으면_게시물없음_예외를_발생시킨다() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-like-missing-post"));
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-like-missing-post"))
+                .thenReturn(null);
+            when(postRepository.findPostById(404L)).thenReturn(null);
+
+            // when & then
+            assertThatThrownBy(() -> likeService.getLikes(principal, 404L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(LikeExceptionType.LIKE_POST_NOT_FOUND));
+            verify(likeRepository, never()).existsLikesByPostIdAndUserId(anyLong(), anyLong());
+            verify(likeRepository, never()).countLikeByPostId(anyLong());
+        }
+
+        @Test
+        void getLikes_비로그인_사용자면_좋아요여부_false와_좋아요개수를_반환한다() {
+            // given
+            Post post = createPost(1L);
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-like-1"));
+            when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-like-1")).thenReturn(null);
+            when(postRepository.findPostById(1L)).thenReturn(post);
+            when(likeRepository.countLikeByPostId(1L)).thenReturn(3);
+
+            // when
+            LikeResponse response = likeService.getLikes(principal, 1L);
+
+            // then
+            assertThat(response.isLiked()).isFalse();
+            assertThat(response.likeCount()).isEqualTo(3);
+            verify(likeRepository, never()).existsLikesByPostIdAndUserId(anyLong(), anyLong());
         }
 
         @Test
         void getLikes_사용자가_존재하면_좋아요여부와_좋아요개수를_반환한다() {
             // given
             User user = createUser(10L, "kakao-like-2");
+            Post post = createPost(99L);
             when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-like-2"));
             when(userRepository.findUserByKakaoIdAndDeletedAtIsNull("kakao-like-2")).thenReturn(user);
             when(likeRepository.existsLikesByPostIdAndUserId(99L, 10L)).thenReturn(true);
+            when(postRepository.findPostById(99L)).thenReturn(post);
             when(likeRepository.countLikeByPostId(99L)).thenReturn(5);
 
             // when
@@ -94,7 +129,7 @@ class LikeServiceTest {
             assertThatThrownBy(() -> likeService.like(principal, 1L))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
-                    .isEqualTo(LikeExceptionType.LIKE_USER_NOT_FOUND));
+                    .isEqualTo(ErrorStatus.UNAUTHORIZED));
             verify(likeRepository, never()).save(any(Like.class));
         }
 
@@ -165,7 +200,7 @@ class LikeServiceTest {
             assertThatThrownBy(() -> likeService.unlike(principal, 5L))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
-                    .isEqualTo(LikeExceptionType.LIKE_USER_NOT_FOUND));
+                    .isEqualTo(ErrorStatus.UNAUTHORIZED));
             verify(likeRepository, never()).deleteLikeByPostIdAndUserId(anyLong(), anyLong());
         }
 
