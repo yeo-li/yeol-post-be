@@ -1,6 +1,9 @@
 package com.yeo_li.yeol_post.domain.post.controller;
 
 
+import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
+import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
@@ -42,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
+    private final CommentService commentService;
     private final PostCommandFactory postCommandFactory;
 
     @Operation(summary = "게시물 저장", description = "사용자가 작성한 게시물을 저장합니다.")
@@ -199,5 +203,28 @@ public class PostController {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(ApiResponse.onSuccess());
+    }
+    
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<ApiResponse<CommentListResponse>> getComments(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long postId
+    ) {
+
+        CommentListResponse response = commentService.getComments(
+            principal, postId);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    // TODO: 게시물에 댓글을 달 때
+    @PostMapping("/{postId}/comments")
+    public ResponseEntity<ApiResponse<?>> saveComment(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long postId,
+        @RequestBody @Valid CommentCreateRequest request
+    ) {
+
+        return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 }
