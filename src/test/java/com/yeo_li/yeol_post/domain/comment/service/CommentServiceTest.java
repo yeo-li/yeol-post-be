@@ -22,6 +22,7 @@ import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
@@ -352,6 +353,56 @@ class CommentServiceTest {
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
             verify(commentRepository, never()).save(any(Comment.class));
+        }
+    }
+
+    @Nested
+    class GetCommentsTest {
+
+        @Test
+        void 반환한다_getComments_댓글과답글의_좋아요수와좋아요여부를_반환한다() {
+            // given
+            Post post = createPost(10L);
+            User commentWriter = createUser(2L);
+            User replyWriter = createUser(3L);
+
+            Comment comment = createComment(501L, "댓글", commentWriter);
+            comment.setPost(post);
+
+            Comment reply = createComment(502L, "답글", replyWriter);
+            reply.setPost(post);
+            reply.setParentComment(comment);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findCommentsByPostIdAndParentCommentIsNull(10L))
+                .thenReturn(List.of(comment));
+            when(commentRepository.findCommentsByParentComment(comment))
+                .thenReturn(List.of(reply));
+
+            when(commentLikeRepository.countByCommentId(501L)).thenReturn(3L);
+            when(commentLikeRepository.existsByCommentIdAndUserId(501L, 1L)).thenReturn(true);
+
+            when(commentLikeRepository.countByCommentId(502L)).thenReturn(1L);
+            when(commentLikeRepository.existsByCommentIdAndUserId(502L, 1L)).thenReturn(false);
+
+            // when
+            var result = commentService.getComments(principal, 10L);
+
+            // then
+            assertThat(result.comments()).hasSize(1);
+
+            var responseComment = result.comments().get(0);
+            assertThat(responseComment.commentId()).isEqualTo(501L);
+            assertThat(responseComment.likeCount()).isEqualTo(3);
+            assertThat(responseComment.isLiked()).isTrue();
+            assertThat(responseComment.isOwner()).isFalse();
+            assertThat(responseComment.replies()).hasSize(1);
+
+            var responseReply = responseComment.replies().get(0);
+            assertThat(responseReply.commentId()).isEqualTo(502L);
+            assertThat(responseReply.likeCount()).isEqualTo(1);
+            assertThat(responseReply.isLiked()).isFalse();
+            assertThat(responseReply.isOwner()).isFalse();
         }
     }
 
