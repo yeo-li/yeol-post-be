@@ -99,7 +99,7 @@ public class CategoryController {
         )
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> createCategory(
+    public ResponseEntity<ApiResponse<Void>> createCategory(
         @RequestBody @Valid CategoryCreateRequest request) {
 
         categoryService.saveCategory(request.toCommand());
@@ -128,7 +128,7 @@ public class CategoryController {
         )
     })
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<Object>> deleteCategory(
+    public ResponseEntity<ApiResponse<Void>> deleteCategory(
         @Parameter(description = "삭제할 카테고리 ID", example = "1")
         @PathVariable Long categoryId
     ) {

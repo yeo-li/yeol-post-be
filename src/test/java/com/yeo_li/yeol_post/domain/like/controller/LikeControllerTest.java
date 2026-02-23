@@ -55,7 +55,7 @@ class LikeControllerTest {
         @Test
         void like_게시물아이디가_주어지면_좋아요를_요청하고_성공응답을_반환한다() {
             // when
-            ResponseEntity<ApiResponse<?>> response = likeController.like(principal, 2L);
+            ResponseEntity<ApiResponse<Void>> response = likeController.like(principal, 2L);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -71,7 +71,7 @@ class LikeControllerTest {
         @Test
         void unlike_게시물아이디가_주어지면_좋아요취소를_요청하고_성공응답을_반환한다() {
             // when
-            ResponseEntity<ApiResponse<?>> response = likeController.unlike(principal, 3L);
+            ResponseEntity<ApiResponse<Void>> response = likeController.unlike(principal, 3L);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

@@ -61,7 +61,7 @@ public class SubscriptionController {
         )
     )
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<?>> subscribe(
+    public ResponseEntity<ApiResponse<Void>> subscribe(
         @RequestBody @Valid SubscriptionCreateRequest request
     ) {
         subscriptionService.subscribe(request.email());
@@ -88,7 +88,7 @@ public class SubscriptionController {
         )
     })
     @GetMapping("/unsubscribe/{token}")
-    public ResponseEntity<ApiResponse<?>> unsubscribe(
+    public ResponseEntity<ApiResponse<Void>> unsubscribe(
         @Parameter(description = "구독 해지 토큰", example = "7e805b3a-6d7b-4f1a-8f0d-f8d89d7f9d21")
         @PathVariable @NotNull String token
     ) {
@@ -157,7 +157,7 @@ public class SubscriptionController {
         )
     )
     @PostMapping("/announcements")
-    public ResponseEntity<ApiResponse<?>> sendAnnouncements(
+    public ResponseEntity<ApiResponse<Void>> sendAnnouncements(
         @RequestBody @Valid SubscriptionAnnounceRequest request
     ) {
         subscriptionService.publishAnnouncementEvent(request);

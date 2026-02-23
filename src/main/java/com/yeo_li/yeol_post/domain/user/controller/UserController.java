@@ -158,7 +158,7 @@ public class UserController {
         )
     )
     @PatchMapping("/me")
-    public ResponseEntity<ApiResponse<Object>> updateUser(
+    public ResponseEntity<ApiResponse<Void>> updateUser(
         @AuthenticationPrincipal OAuth2User principal,
         @RequestBody UserUpdateRequest request) {
 
@@ -220,7 +220,7 @@ public class UserController {
         )
     })
     @DeleteMapping("/me")
-    public ResponseEntity<ApiResponse<Object>> deleteUser(
+    public ResponseEntity<ApiResponse<Void>> deleteUser(
         @AuthenticationPrincipal OAuth2User principal,
         @RegisteredOAuth2AuthorizedClient("kakao") OAuth2AuthorizedClient authorizedClient,
         HttpServletRequest request,

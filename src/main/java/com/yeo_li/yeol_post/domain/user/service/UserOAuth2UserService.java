@@ -5,6 +5,7 @@ import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import java.util.HashMap;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,10 @@ public class UserOAuth2UserService implements OAuth2UserService<OAuth2UserReques
             .getUserInfoEndpoint()
             .getUserNameAttributeName();
 
-        return new DefaultOAuth2User(authorities, oauth2User.getAttributes(),
+        Map<String, Object> customAttributes = new HashMap<>(oauth2User.getAttributes());
+        customAttributes.put("userId", user.getId());
+
+        return new DefaultOAuth2User(authorities, customAttributes,
             userNameAttributeName);
     }
 }
