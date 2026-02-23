@@ -1,12 +1,18 @@
 package com.yeo_li.yeol_post.domain.post.controller;
 
 
+import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
+import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
 import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.service.PostService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
+import com.yeo_li.yeol_post.global.common.swagger.CommentListResponseApiResponse;
+import com.yeo_li.yeol_post.global.common.swagger.CommentResponseApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.ListPostResponseApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.VoidApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
+    private final CommentService commentService;
     private final PostCommandFactory postCommandFactory;
 
     @Operation(summary = "게시물 저장", description = "사용자가 작성한 게시물을 저장합니다.")
@@ -132,7 +139,7 @@ public class PostController {
             , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
     })
     @DeleteMapping("/{postId}")
-    public ResponseEntity<?> deletePost(
+    public ResponseEntity<ApiResponse<Void>> deletePost(
         @Parameter(description = "삭제할 게시물 ID", example = "10")
         @PathVariable("postId") Long postId
     ) {
@@ -199,5 +206,58 @@ public class PostController {
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(ApiResponse.onSuccess());
+    }
+
+    @Operation(summary = "게시물 댓글 목록 조회", description = "게시물 ID 기준으로 댓글과 답글 목록을 조회합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = CommentListResponseApiResponse.class))
+        )
+    })
+    @GetMapping("/{postId}/comments")
+    public ResponseEntity<ApiResponse<CommentListResponse>> getComments(
+        @AuthenticationPrincipal OAuth2User principal,
+        @Parameter(description = "댓글을 조회할 게시물 ID", example = "10")
+        @PathVariable Long postId
+    ) {
+
+        CommentListResponse response = commentService.getComments(
+            principal, postId);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
+    }
+
+    @Operation(summary = "게시물 댓글 작성", description = "게시물 ID 기준으로 새 댓글을 작성합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "작성 성공",
+            content = @Content(schema = @Schema(implementation = CommentResponseApiResponse.class))
+        )
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+        required = true,
+        description = "댓글 작성 요청 바디",
+        content = @Content(
+            mediaType = "application/json",
+            examples = @ExampleObject(value = """
+                {
+                  "content": "좋은 글 감사합니다!"
+                }
+                """)
+        )
+    )
+    @PostMapping("/{postId}/comments")
+    public ResponseEntity<ApiResponse<CommentResponse>> saveComment(
+        @AuthenticationPrincipal OAuth2User principal,
+        @Parameter(description = "댓글을 작성할 게시물 ID", example = "10")
+        @PathVariable Long postId,
+        @RequestBody @Valid CommentCreateRequest request
+    ) {
+        CommentResponse response = commentService.saveComment(principal, postId, request);
+
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }

@@ -53,5 +53,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     List<Post> findByIsPublishedFalseOrderByCreatedAtDesc();
 
+    boolean existsById(Long Id);
 
+    boolean existsPostById(Long id);
 }

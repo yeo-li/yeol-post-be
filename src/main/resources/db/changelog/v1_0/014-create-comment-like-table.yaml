@@ -1,0 +1,151 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-create-comment-like-table
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: comment_like
+      changes:
+        - createTable:
+            tableName: comment_like
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: comment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 020-add-uk-comment-like-user-comment
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - columnExists:
+              tableName: comment_like
+              columnName: user_id
+          - columnExists:
+              tableName: comment_like
+              columnName: comment_id
+          - not:
+              - uniqueConstraintExists:
+                  tableName: comment_like
+                  constraintName: uk_comment_like_user_comment
+      changes:
+        - addUniqueConstraint:
+            tableName: comment_like
+            columnNames: user_id, comment_id
+            constraintName: uk_comment_like_user_comment
+
+  - changeSet:
+      id: 021-create-index-comment-like-user-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - columnExists:
+              tableName: comment_like
+              columnName: user_id
+          - not:
+              - indexExists:
+                  tableName: comment_like
+                  indexName: idx_comment_like_user_id
+      changes:
+        - createIndex:
+            tableName: comment_like
+            indexName: idx_comment_like_user_id
+            columns:
+              - column: { name: user_id }
+
+  - changeSet:
+      id: 022-create-index-comment-like-comment-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - columnExists:
+              tableName: comment_like
+              columnName: comment_id
+          - not:
+              - indexExists:
+                  tableName: comment_like
+                  indexName: idx_comment_like_comment_id
+      changes:
+        - createIndex:
+            tableName: comment_like
+            indexName: idx_comment_like_comment_id
+            columns:
+              - column: { name: comment_id }
+
+  - changeSet:
+      id: 023-add-fk-comment-like-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: comment_like
+              columnName: user_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_like_user
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment_like
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_comment_like_user
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 024-add-fk-comment-like-comment
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment_like
+              columnName: comment_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_like_comment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment_like
+            baseColumnNames: comment_id
+            referencedTableName: comment
+            referencedColumnNames: id
+            constraintName: fk_comment_like_comment
+            onDelete: CASCADE
+            onUpdate: RESTRICT
