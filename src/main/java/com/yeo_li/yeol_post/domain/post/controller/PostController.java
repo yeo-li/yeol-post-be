@@ -3,6 +3,7 @@ package com.yeo_li.yeol_post.domain.post.controller;
 
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
+import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
 import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
 import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
@@ -204,7 +205,7 @@ public class PostController {
             .status(HttpStatus.OK)
             .body(ApiResponse.onSuccess());
     }
-    
+
     @GetMapping("/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentListResponse>> getComments(
         @AuthenticationPrincipal OAuth2User principal,
@@ -217,14 +218,14 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
-    // TODO: 게시물에 댓글을 달 때
     @PostMapping("/{postId}/comments")
-    public ResponseEntity<ApiResponse<?>> saveComment(
+    public ResponseEntity<ApiResponse<CommentResponse>> saveComment(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long postId,
         @RequestBody @Valid CommentCreateRequest request
     ) {
+        CommentResponse response = commentService.saveComment(principal, postId, request);
 
-        return ResponseEntity.ok(ApiResponse.onSuccess());
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 }
