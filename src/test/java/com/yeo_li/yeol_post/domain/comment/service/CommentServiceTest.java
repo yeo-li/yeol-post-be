@@ -3,15 +3,18 @@ package com.yeo_li.yeol_post.domain.comment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.comment.domain.Comment;
+import com.yeo_li.yeol_post.domain.comment.domain.CommentLike;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
+import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
@@ -35,6 +38,9 @@ class CommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
 
     @Mock
     private PostRepository postRepository;
@@ -346,6 +352,171 @@ class CommentServiceTest {
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
             verify(commentRepository, never()).save(any(Comment.class));
+        }
+    }
+
+    @Nested
+    class LikeCommentTest {
+
+        @Test
+        void 저장한다_likeComment_유효한요청이면_댓글좋아요를_저장한다() {
+            // given
+            User user = createUser(1L);
+            Comment comment = createComment(401L, "댓글", createUser(2L));
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(Optional.of(comment));
+            when(commentLikeRepository.existsByCommentIdAndUserId(401L, 1L)).thenReturn(false);
+
+            // when
+            commentService.likeComment(principal, 401L);
+
+            // then
+            ArgumentCaptor<CommentLike> captor = ArgumentCaptor.forClass(CommentLike.class);
+            verify(commentLikeRepository).save(captor.capture());
+            assertThat(captor.getValue().getUser()).isEqualTo(user);
+            assertThat(captor.getValue().getComment()).isEqualTo(comment);
+        }
+
+        @Test
+        void 저장하지않는다_likeComment_이미좋아요한댓글이면_저장하지않는다() {
+            // given
+            User user = createUser(1L);
+            Comment comment = createComment(401L, "댓글", createUser(2L));
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(Optional.of(comment));
+            when(commentLikeRepository.existsByCommentIdAndUserId(401L, 1L)).thenReturn(true);
+
+            // when
+            commentService.likeComment(principal, 401L);
+
+            // then
+            verify(commentLikeRepository, never()).save(any(CommentLike.class));
+        }
+
+        @Test
+        void 발생시킨다_likeComment_principal에userId가없으면_인증실패예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-only"));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.likeComment(principal, 401L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
+            verify(commentLikeRepository, never()).save(any(CommentLike.class));
+        }
+
+        @Test
+        void 발생시킨다_likeComment_사용자가없으면_사용자없음예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.likeComment(principal, 401L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+            verify(commentLikeRepository, never()).save(any(CommentLike.class));
+        }
+
+        @Test
+        void 발생시킨다_likeComment_댓글이없으면_댓글없음예외를() {
+            // given
+            User user = createUser(1L);
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.likeComment(principal, 401L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
+            verify(commentLikeRepository, never()).save(any(CommentLike.class));
+        }
+    }
+
+    @Nested
+    class UnlikeCommentTest {
+
+        @Test
+        void 삭제한다_unlikeComment_이미좋아요한댓글이면_좋아요를삭제한다() {
+            // given
+            User user = createUser(1L);
+            Comment comment = createComment(402L, "댓글", createUser(2L));
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(Optional.of(comment));
+            when(commentLikeRepository.existsByCommentIdAndUserId(402L, 1L)).thenReturn(true);
+
+            // when
+            commentService.unlikeComment(principal, 402L);
+
+            // then
+            verify(commentLikeRepository).deleteByCommentIdAndUserId(402L, 1L);
+        }
+
+        @Test
+        void 삭제하지않는다_unlikeComment_좋아요하지않은댓글이면_삭제하지않는다() {
+            // given
+            User user = createUser(1L);
+            Comment comment = createComment(402L, "댓글", createUser(2L));
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(Optional.of(comment));
+            when(commentLikeRepository.existsByCommentIdAndUserId(402L, 1L)).thenReturn(false);
+
+            // when
+            commentService.unlikeComment(principal, 402L);
+
+            // then
+            verify(commentLikeRepository, never()).deleteByCommentIdAndUserId(anyLong(), anyLong());
+        }
+
+        @Test
+        void 발생시킨다_unlikeComment_principal에userId가없으면_인증실패예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-only"));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.unlikeComment(principal, 402L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
+            verify(commentLikeRepository, never()).deleteByCommentIdAndUserId(anyLong(), anyLong());
+        }
+
+        @Test
+        void 발생시킨다_unlikeComment_사용자가없으면_사용자없음예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.unlikeComment(principal, 402L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+            verify(commentLikeRepository, never()).deleteByCommentIdAndUserId(anyLong(), anyLong());
+        }
+
+        @Test
+        void 발생시킨다_unlikeComment_댓글이없으면_댓글없음예외를() {
+            // given
+            User user = createUser(1L);
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.unlikeComment(principal, 402L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
+            verify(commentLikeRepository, never()).deleteByCommentIdAndUserId(anyLong(), anyLong());
         }
     }
 

@@ -62,20 +62,22 @@ public class CommentController {
 
     // 게시물의 댓글에 좋아요를 누를 때
     @PostMapping("/{commentId}/likes")
-    public ResponseEntity<ApiResponse<?>> likeComment(
+    public ResponseEntity<ApiResponse<Void>> likeComment(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long commentId
     ) {
+        commentService.likeComment(principal, commentId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 
     // 게시물의 댓글에 좋아요를 취소할 때
     @DeleteMapping("/{commentId}/likes")
-    public ResponseEntity<ApiResponse<?>> unlikeComment(
+    public ResponseEntity<ApiResponse<Void>> unlikeComment(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long commentId
     ) {
+        commentService.unlikeComment(principal, commentId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess());
     }
