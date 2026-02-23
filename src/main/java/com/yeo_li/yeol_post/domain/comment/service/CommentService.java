@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,8 +51,10 @@ public class CommentService {
             throw new GeneralException(CommentExceptionType.COMMENT_POST_NOT_FOUND);
         }
 
+        String sanitizedContent = sanitizeCommentContent(request.content());
+
         Comment savedComment = commentRepository.save(
-            new Comment(request.content(), post, user, null)
+            new Comment(sanitizedContent, post, user, null)
         );
 
         return convertCommentResponse(userId, savedComment);
@@ -87,7 +91,7 @@ public class CommentService {
             throw new GeneralException(CommentExceptionType.COMMENT_FORBIDDEN);
         }
 
-        comment.setContent(request.content());
+        comment.setContent(sanitizeCommentContent(request.content()));
     }
 
     @Transactional
@@ -104,8 +108,10 @@ public class CommentService {
         Comment parentComment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
             .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
 
+        String sanitizedContent = sanitizeCommentContent(request.content());
+
         Comment reply = commentRepository.save(
-            new Comment(request.content(), parentComment.getPost(), user, parentComment)
+            new Comment(sanitizedContent, parentComment.getPost(), user, parentComment)
         );
 
         return convertCommentReplyResponse(userId, reply);
@@ -168,13 +174,16 @@ public class CommentService {
         for (Comment comment : comments) {
             CommentResponse commentResponse = convertCommentResponse(userId, comment);
 
-            List<Comment> replies = commentRepository.findCommentsByParentComment(comment);
+            List<Comment> replies = commentRepository.findCommentsByParentCommentAndDeletedAtIsNull(
+                comment);
             for (Comment reply : replies) {
                 CommentReplyResponse commentReplyResponse = convertCommentReplyResponse(userId,
                     reply);
                 commentResponse.replies().add(commentReplyResponse);
             }
-
+            if (commentResponse.isDeleted() && commentResponse.replies().isEmpty()) {
+                continue;
+            }
             commentResponses.add(commentResponse);
         }
 
@@ -188,12 +197,13 @@ public class CommentService {
 
         return new CommentResponse(
             comment.getId(),
-            comment.getUser().getNickname(),
-            comment.getContent(),
+            comment.getDeletedAt() == null ? comment.getUser().getNickname() : "(알수없음)",
+            comment.getDeletedAt() == null ? comment.getContent() : "삭제된 댓글입니다.",
             comment.getCreatedAt(),
             likeCount,
-            isLiked,
+            comment.getDeletedAt() == null ? isLiked : false,
             Objects.equals(comment.getUser().getId(), userId),
+            comment.getDeletedAt() != null,
             new ArrayList<>()
         );
     }
@@ -237,6 +247,14 @@ public class CommentService {
         }
 
         return null;
+    }
+
+    private String sanitizeCommentContent(String content) {
+        String sanitized = Jsoup.clean(content, Safelist.none()).strip();
+        if (sanitized.isBlank()) {
+            throw new GeneralException(CommentExceptionType.COMMENT_CONTENT_INVALID);
+        }
+        return sanitized;
     }
 
 }

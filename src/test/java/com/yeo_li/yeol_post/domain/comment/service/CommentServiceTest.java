@@ -152,7 +152,8 @@ class CommentServiceTest {
             User owner = createUser(1L);
             Comment comment = createComment(101L, "삭제 대상", owner);
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
-            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(
+                Optional.of(comment));
 
             // when
             commentService.deleteComment(principal, 101L);
@@ -193,7 +194,8 @@ class CommentServiceTest {
             User owner = createUser(2L);
             Comment comment = createComment(101L, "삭제 대상", owner);
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
-            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(
+                Optional.of(comment));
 
             // when & then
             assertThatThrownBy(() -> commentService.deleteComment(principal, 101L))
@@ -213,7 +215,8 @@ class CommentServiceTest {
             Comment comment = createComment(201L, "기존 댓글", owner);
             CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
-            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(
+                Optional.of(comment));
 
             // when
             commentService.updateComment(principal, 201L, request);
@@ -257,7 +260,8 @@ class CommentServiceTest {
             Comment comment = createComment(201L, "기존 댓글", owner);
             CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
-            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(
+                Optional.of(comment));
 
             // when & then
             assertThatThrownBy(() -> commentService.updateComment(principal, 201L, request))
@@ -281,7 +285,8 @@ class CommentServiceTest {
 
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-            when(commentRepository.findByIdAndDeletedAtIsNull(301L)).thenReturn(Optional.of(parent));
+            when(commentRepository.findByIdAndDeletedAtIsNull(301L)).thenReturn(
+                Optional.of(parent));
             when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
                 Comment reply = invocation.getArgument(0);
                 reply.setId(302L);
@@ -357,6 +362,105 @@ class CommentServiceTest {
     }
 
     @Nested
+    class XssSanitizationTest {
+
+        @Test
+        void 저장한다_saveComment_스크립트태그가포함되면_스크립트를제거하고저장한다() {
+            // given
+            User user = createUser(1L);
+            Post post = createPost(10L);
+            CommentCreateRequest request =
+                new CommentCreateRequest("<script>alert('xss')</script>안전한 문장");
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(postRepository.findPostById(10L)).thenReturn(post);
+            when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+                Comment comment = invocation.getArgument(0);
+                comment.setId(601L);
+                return comment;
+            });
+
+            // when
+            CommentResponse response = commentService.saveComment(principal, 10L, request);
+
+            // then
+            ArgumentCaptor<Comment> captor = ArgumentCaptor.forClass(Comment.class);
+            verify(commentRepository).save(captor.capture());
+            assertThat(captor.getValue().getContent()).isEqualTo("안전한 문장");
+            assertThat(response.content()).isEqualTo("안전한 문장");
+        }
+
+        @Test
+        void 수정한다_updateComment_onerror속성이포함되면_속성을제거하고수정한다() {
+            // given
+            User owner = createUser(1L);
+            Comment comment = createComment(602L, "기존 댓글", owner);
+            CommentUpdateRequest request =
+                new CommentUpdateRequest("<img src=x onerror=alert(1)>수정 본문");
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(602L)).thenReturn(
+                Optional.of(comment));
+
+            // when
+            commentService.updateComment(principal, 602L, request);
+
+            // then
+            assertThat(comment.getContent()).isEqualTo("수정 본문");
+        }
+
+        @Test
+        void 저장한다_saveReply_javascript링크가포함되면_링크를제거하고저장한다() {
+            // given
+            User user = createUser(1L);
+            Post post = createPost(10L);
+            Comment parent = createComment(603L, "부모 댓글", createUser(2L));
+            parent.setPost(post);
+            CommentCreateRequest request =
+                new CommentCreateRequest("<a href=\"javascript:alert(1)\">클릭</a>");
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(603L)).thenReturn(
+                Optional.of(parent));
+            when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+                Comment reply = invocation.getArgument(0);
+                reply.setId(604L);
+                return reply;
+            });
+
+            // when
+            var response = commentService.saveReply(principal, 603L, request);
+
+            // then
+            ArgumentCaptor<Comment> captor = ArgumentCaptor.forClass(Comment.class);
+            verify(commentRepository).save(captor.capture());
+            assertThat(captor.getValue().getContent()).isEqualTo("클릭");
+            assertThat(response.content()).isEqualTo("클릭");
+        }
+
+        @Test
+        void 발생시킨다_saveComment_태그제거후내용이비면_유효성예외를() {
+            // given
+            User user = createUser(1L);
+            Post post = createPost(10L);
+            CommentCreateRequest request = new CommentCreateRequest("<script>alert(1)</script>");
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(postRepository.findPostById(10L)).thenReturn(post);
+
+            // when & then
+            assertThatThrownBy(() -> commentService.saveComment(principal, 10L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_CONTENT_INVALID));
+            verify(commentRepository, never()).save(any(Comment.class));
+        }
+    }
+
+    @Nested
     class GetCommentsTest {
 
         @Test
@@ -376,7 +480,7 @@ class CommentServiceTest {
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(commentRepository.findCommentsByPostIdAndParentCommentIsNull(10L))
                 .thenReturn(List.of(comment));
-            when(commentRepository.findCommentsByParentComment(comment))
+            when(commentRepository.findCommentsByParentCommentAndDeletedAtIsNull(comment))
                 .thenReturn(List.of(reply));
 
             when(commentLikeRepository.countByCommentId(501L)).thenReturn(3L);
@@ -416,7 +520,8 @@ class CommentServiceTest {
             Comment comment = createComment(401L, "댓글", createUser(2L));
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(
+                Optional.of(comment));
             when(commentLikeRepository.existsByCommentIdAndUserId(401L, 1L)).thenReturn(false);
 
             // when
@@ -436,7 +541,8 @@ class CommentServiceTest {
             Comment comment = createComment(401L, "댓글", createUser(2L));
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(
+                Optional.of(comment));
             when(commentLikeRepository.existsByCommentIdAndUserId(401L, 1L)).thenReturn(true);
 
             // when
@@ -500,7 +606,8 @@ class CommentServiceTest {
             Comment comment = createComment(402L, "댓글", createUser(2L));
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(
+                Optional.of(comment));
             when(commentLikeRepository.existsByCommentIdAndUserId(402L, 1L)).thenReturn(true);
 
             // when
@@ -517,7 +624,8 @@ class CommentServiceTest {
             Comment comment = createComment(402L, "댓글", createUser(2L));
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(Optional.of(comment));
+            when(commentRepository.findByIdAndDeletedAtIsNull(402L)).thenReturn(
+                Optional.of(comment));
             when(commentLikeRepository.existsByCommentIdAndUserId(402L, 1L)).thenReturn(false);
 
             // when

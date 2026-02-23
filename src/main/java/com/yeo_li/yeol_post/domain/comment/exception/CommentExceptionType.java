@@ -5,6 +5,7 @@ import com.yeo_li.yeol_post.global.common.response.code.Reason;
 import org.springframework.http.HttpStatus;
 
 public enum CommentExceptionType implements BaseCode {
+    COMMENT_CONTENT_INVALID(HttpStatus.BAD_REQUEST, "COMMENT400", "댓글 내용이 유효하지 않습니다."),
     COMMENT_USER_ID_INVALID(HttpStatus.UNAUTHORIZED, "COMMENT401", "인증된 사용자 정보를 찾을 수 없습니다."),
     COMMENT_FORBIDDEN(HttpStatus.FORBIDDEN, "COMMENT403", "댓글에 접근할 권한이 없습니다."),
     COMMENT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404", "사용자를 찾을 수 없습니다."),
