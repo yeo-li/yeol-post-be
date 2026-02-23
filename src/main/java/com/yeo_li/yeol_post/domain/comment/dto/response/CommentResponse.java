@@ -20,6 +20,8 @@ public record CommentResponse(
     boolean isLiked,
     @Schema(description = "현재 사용자가 작성자인지 여부", example = "false")
     boolean isOwner,
+    @Schema(description = "삭제된 댓글 여부", example = "false")
+    boolean isDeleted,
     @Schema(description = "해당 댓글의 답글 목록")
     List<CommentReplyResponse> replies
 ) {

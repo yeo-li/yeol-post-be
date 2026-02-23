@@ -164,7 +164,7 @@ public class DraftController {
         )
     )
     @PatchMapping("/{postId}")
-    public ResponseEntity<?> updateDraftPost(
+    public ResponseEntity<ApiResponse<Void>> updateDraftPost(
         @Parameter(description = "수정할 임시 게시물 ID", example = "101")
         @PathVariable("postId") Long postId,
         @RequestBody PostUpdateRequest request) {

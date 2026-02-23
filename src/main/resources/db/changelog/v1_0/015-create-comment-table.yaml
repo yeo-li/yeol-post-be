@@ -1,0 +1,217 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-create-comment-table
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: comment
+      changes:
+        - createTable:
+            tableName: comment
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: content
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: DATETIME(6)
+              - column:
+                  name: post_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_comment_id
+                  type: BIGINT
+
+  - changeSet:
+      id: 026-create-index-comment-post-parent-deleted
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment
+              columnName: post_id
+          - columnExists:
+              tableName: comment
+              columnName: parent_comment_id
+          - columnExists:
+              tableName: comment
+              columnName: deleted_at
+          - not:
+              - indexExists:
+                  tableName: comment
+                  indexName: idx_comment_post_parent_deleted
+      changes:
+        - createIndex:
+            tableName: comment
+            indexName: idx_comment_post_parent_deleted
+            columns:
+              - column: { name: post_id }
+              - column: { name: parent_comment_id }
+              - column: { name: deleted_at }
+
+  - changeSet:
+      id: 027-create-index-comment-parent-comment-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment
+              columnName: parent_comment_id
+          - not:
+              - indexExists:
+                  tableName: comment
+                  indexName: idx_comment_parent_comment_id
+      changes:
+        - createIndex:
+            tableName: comment
+            indexName: idx_comment_parent_comment_id
+            columns:
+              - column: { name: parent_comment_id }
+
+  - changeSet:
+      id: 028-create-index-comment-user-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment
+              columnName: user_id
+          - not:
+              - indexExists:
+                  tableName: comment
+                  indexName: idx_comment_user_id
+      changes:
+        - createIndex:
+            tableName: comment
+            indexName: idx_comment_user_id
+            columns:
+              - column: { name: user_id }
+
+  - changeSet:
+      id: 029-add-fk-comment-post
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - tableExists: { tableName: post }
+          - columnExists:
+              tableName: comment
+              columnName: post_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_post
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment
+            baseColumnNames: post_id
+            referencedTableName: post
+            referencedColumnNames: id
+            constraintName: fk_comment_post
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 030-add-fk-comment-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: comment
+              columnName: user_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_user
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_comment_user
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 031-add-fk-comment-parent-comment
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment
+              columnName: parent_comment_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_parent_comment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment
+            baseColumnNames: parent_comment_id
+            referencedTableName: comment
+            referencedColumnNames: id
+            constraintName: fk_comment_parent_comment
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 032-backfill-fk-comment-like-comment
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: comment_like }
+          - tableExists: { tableName: comment }
+          - columnExists:
+              tableName: comment_like
+              columnName: comment_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_comment_like_comment
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: comment_like
+            baseColumnNames: comment_id
+            referencedTableName: comment
+            referencedColumnNames: id
+            constraintName: fk_comment_like_comment
+            onDelete: CASCADE
+            onUpdate: RESTRICT

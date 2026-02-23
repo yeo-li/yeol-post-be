@@ -139,7 +139,7 @@ public class PostController {
             , content = @Content(schema = @Schema(implementation = VoidApiResponse.class)))
     })
     @DeleteMapping("/{postId}")
-    public ResponseEntity<?> deletePost(
+    public ResponseEntity<ApiResponse<Void>> deletePost(
         @Parameter(description = "삭제할 게시물 ID", example = "10")
         @PathVariable("postId") Long postId
     ) {

@@ -58,7 +58,7 @@ public class LikeController {
         )
     })
     @PostMapping("/{postId}")
-    public ResponseEntity<ApiResponse<?>> like(
+    public ResponseEntity<ApiResponse<Void>> like(
         @AuthenticationPrincipal OAuth2User principal,
         @Parameter(description = "좋아요를 등록할 게시물 ID", example = "10")
         @PathVariable("postId") Long postId
@@ -77,7 +77,7 @@ public class LikeController {
         )
     })
     @DeleteMapping("/{postId}")
-    public ResponseEntity<ApiResponse<?>> unlike(
+    public ResponseEntity<ApiResponse<Void>> unlike(
         @AuthenticationPrincipal OAuth2User principal,
         @Parameter(description = "좋아요를 취소할 게시물 ID", example = "10")
         @PathVariable("postId") Long postId
