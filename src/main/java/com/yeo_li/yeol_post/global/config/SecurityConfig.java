@@ -94,7 +94,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**", "/logout",
-                    "/error", "/swagger-ui/**", "/v3/api-docs/**") // todo 제거해라
+                    "/error")
                 .permitAll() // public page
 
                 // public read endpoint
