@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.comment.domain.Comment;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
@@ -135,6 +136,130 @@ class CommentServiceTest {
         }
     }
 
+    @Nested
+    class DeleteCommentTest {
+
+        @Test
+        void 삭제한다_deleteComment_댓글소유자면_deletedAt을_설정한다() {
+            // given
+            User owner = createUser(1L);
+            Comment comment = createComment(101L, "삭제 대상", owner);
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(Optional.of(comment));
+
+            // when
+            commentService.deleteComment(principal, 101L);
+
+            // then
+            assertThat(comment.getDeletedAt()).isNotNull();
+        }
+
+        @Test
+        void 발생시킨다_deleteComment_principal에_userId가_없으면_인증실패_예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-only"));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.deleteComment(principal, 101L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
+            verify(commentRepository, never()).findByIdAndDeletedAtIsNull(any());
+        }
+
+        @Test
+        void 발생시킨다_deleteComment_댓글이_없으면_댓글없음_예외를() {
+            // given
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.deleteComment(principal, 101L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
+        }
+
+        @Test
+        void 발생시킨다_deleteComment_댓글소유자가_아니면_권한없음_예외를() {
+            // given
+            User owner = createUser(2L);
+            Comment comment = createComment(101L, "삭제 대상", owner);
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(101L)).thenReturn(Optional.of(comment));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.deleteComment(principal, 101L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
+        }
+    }
+
+    @Nested
+    class UpdateCommentTest {
+
+        @Test
+        void 수정한다_updateComment_댓글소유자면_내용을_변경한다() {
+            // given
+            User owner = createUser(1L);
+            Comment comment = createComment(201L, "기존 댓글", owner);
+            CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(Optional.of(comment));
+
+            // when
+            commentService.updateComment(principal, 201L, request);
+
+            // then
+            assertThat(comment.getContent()).isEqualTo("수정된 댓글");
+        }
+
+        @Test
+        void 발생시킨다_updateComment_principal에_userId가_없으면_인증실패_예외를() {
+            // given
+            CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-only"));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.updateComment(principal, 201L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
+            verify(commentRepository, never()).findByIdAndDeletedAtIsNull(any());
+        }
+
+        @Test
+        void 발생시킨다_updateComment_댓글이_없으면_댓글없음_예외를() {
+            // given
+            CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.updateComment(principal, 201L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
+        }
+
+        @Test
+        void 발생시킨다_updateComment_댓글소유자가_아니면_권한없음_예외를() {
+            // given
+            User owner = createUser(2L);
+            Comment comment = createComment(201L, "기존 댓글", owner);
+            CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(201L)).thenReturn(Optional.of(comment));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.updateComment(principal, 201L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
+        }
+    }
+
     private User createUser(Long userId) {
         User user = new User();
         user.setId(userId);
@@ -153,5 +278,13 @@ class CommentServiceTest {
         post.setIsPublished(true);
         post.setIsDeleted(false);
         return post;
+    }
+
+    private Comment createComment(Long commentId, String content, User user) {
+        Comment comment = new Comment();
+        comment.setId(commentId);
+        comment.setContent(content);
+        comment.setUser(user);
+        return comment;
     }
 }

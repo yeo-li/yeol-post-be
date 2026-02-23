@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.comment.service;
 
 import com.yeo_li.yeol_post.domain.comment.domain.Comment;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
@@ -12,6 +13,7 @@ import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +50,40 @@ public class CommentService {
         );
 
         return convertCommentResponse(userId, savedComment);
+    }
+
+    @Transactional
+    public void deleteComment(OAuth2User principal, Long commentId) {
+        Long userId = getUserId(principal);
+        if (userId == null) {
+            throw new GeneralException(CommentExceptionType.COMMENT_USER_ID_INVALID);
+        }
+
+        Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
+            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
+
+        if (!Objects.equals(comment.getUser().getId(), userId)) {
+            throw new GeneralException(CommentExceptionType.COMMENT_FORBIDDEN);
+        }
+
+        comment.setDeletedAt(LocalDateTime.now());
+    }
+
+    @Transactional
+    public void updateComment(OAuth2User principal, Long commentId, CommentUpdateRequest request) {
+        Long userId = getUserId(principal);
+        if (userId == null) {
+            throw new GeneralException(CommentExceptionType.COMMENT_USER_ID_INVALID);
+        }
+
+        Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
+            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
+
+        if (!Objects.equals(comment.getUser().getId(), userId)) {
+            throw new GeneralException(CommentExceptionType.COMMENT_FORBIDDEN);
+        }
+
+        comment.setContent(request.content());
     }
 
     public CommentListResponse getComments(OAuth2User principal, Long postId) {

@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.comment.controller;
 
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
+import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,23 +22,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CommentController {
 
+    private final CommentService commentService;
+
     // 게시물의 댓글을 삭제할 때
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<?>> deleteComment(
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long commentId
     ) {
+        commentService.deleteComment(principal, commentId);
 
         return ResponseEntity.ok(ApiResponse.onSuccess());
     }
 
     // 게시물의 댓글을 수정할 때
     @PatchMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<?>> updateComment(
+    public ResponseEntity<ApiResponse<Void>> updateComment(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long commentId,
         @RequestBody @Valid CommentUpdateRequest request
     ) {
+        commentService.updateComment(principal, commentId, request);
 
         return ResponseEntity.ok(ApiResponse.onSuccess());
     }
