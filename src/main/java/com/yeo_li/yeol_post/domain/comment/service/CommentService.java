@@ -182,26 +182,34 @@ public class CommentService {
     }
 
     private CommentResponse convertCommentResponse(Long userId, Comment comment) {
+        int likeCount = Math.toIntExact(commentLikeRepository.countByCommentId(comment.getId()));
+        boolean isLiked = userId != null
+            && commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), userId);
+
         return new CommentResponse(
             comment.getId(),
             comment.getUser().getNickname(),
             comment.getContent(),
             comment.getCreatedAt(),
-            0, // TODO: 아직 구현 안됨. 일단 댓글 api 다 만들고 좋아요로 넘어갈거임
-            false, // TODO: 아직 구현 안됨. 일단 댓글 api 다 만들고 좋아요로 넘어갈거임
+            likeCount,
+            isLiked,
             Objects.equals(comment.getUser().getId(), userId),
             new ArrayList<>()
         );
     }
 
     private CommentReplyResponse convertCommentReplyResponse(Long userId, Comment comment) {
+        int likeCount = Math.toIntExact(commentLikeRepository.countByCommentId(comment.getId()));
+        boolean isLiked = userId != null
+            && commentLikeRepository.existsByCommentIdAndUserId(comment.getId(), userId);
+
         return new CommentReplyResponse(
             comment.getId(),
             comment.getUser().getNickname(),
             comment.getContent(),
             comment.getCreatedAt(),
-            0, // TODO: 아직 구현 안됨. 일단 댓글 api 다 만들고 좋아요로 넘어갈거임
-            false, // TODO: 아직 구현 안됨. 일단 댓글 api 다 만들고 좋아요로 넘어갈거임
+            likeCount,
+            isLiked,
             Objects.equals(comment.getUser().getId(), userId)
         );
     }
