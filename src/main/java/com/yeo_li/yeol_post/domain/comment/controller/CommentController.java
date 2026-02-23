@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.comment.controller;
 
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -49,13 +50,14 @@ public class CommentController {
 
     // 게시물의 댓글에 답글을 달 때
     @PostMapping("/{commentId}/replies")
-    public ResponseEntity<ApiResponse<?>> saveReply(
+    public ResponseEntity<ApiResponse<CommentReplyResponse>> saveReply(
         @AuthenticationPrincipal OAuth2User principal,
         @PathVariable Long commentId,
         @RequestBody @Valid CommentCreateRequest request
     ) {
+        CommentReplyResponse response = commentService.saveReply(principal, commentId, request);
 
-        return ResponseEntity.ok(ApiResponse.onSuccess());
+        return ResponseEntity.ok(ApiResponse.onSuccess(response));
     }
 
     // 게시물의 댓글에 좋아요를 누를 때

@@ -31,7 +31,8 @@ public class CommentService {
     private final UserRepository userRepository;
 
     @Transactional
-    public CommentResponse saveComment(OAuth2User principal, Long postId, CommentCreateRequest request) {
+    public CommentResponse saveComment(OAuth2User principal, Long postId,
+        CommentCreateRequest request) {
         Long userId = getUserId(principal);
         if (userId == null) {
             throw new GeneralException(CommentExceptionType.COMMENT_USER_ID_INVALID);
@@ -84,6 +85,27 @@ public class CommentService {
         }
 
         comment.setContent(request.content());
+    }
+
+    @Transactional
+    public CommentReplyResponse saveReply(OAuth2User principal, Long commentId,
+        CommentCreateRequest request) {
+        Long userId = getUserId(principal);
+        if (userId == null) {
+            throw new GeneralException(CommentExceptionType.COMMENT_USER_ID_INVALID);
+        }
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+
+        Comment parentComment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
+            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
+
+        Comment reply = commentRepository.save(
+            new Comment(request.content(), parentComment.getPost(), user, parentComment)
+        );
+
+        return convertCommentReplyResponse(userId, reply);
     }
 
     public CommentListResponse getComments(OAuth2User principal, Long postId) {

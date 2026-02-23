@@ -260,6 +260,95 @@ class CommentServiceTest {
         }
     }
 
+    @Nested
+    class SaveReplyTest {
+
+        @Test
+        void 저장한다_saveReply_유효한요청이면_답글을_저장하고_응답을_반환한다() {
+            // given
+            User user = createUser(1L);
+            Post post = createPost(10L);
+            Comment parent = createComment(301L, "부모 댓글", createUser(2L));
+            parent.setPost(post);
+            CommentCreateRequest request = new CommentCreateRequest("답글 본문");
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(301L)).thenReturn(Optional.of(parent));
+            when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+                Comment reply = invocation.getArgument(0);
+                reply.setId(302L);
+                return reply;
+            });
+
+            // when
+            var response = commentService.saveReply(principal, 301L, request);
+
+            // then
+            ArgumentCaptor<Comment> replyCaptor = ArgumentCaptor.forClass(Comment.class);
+            verify(commentRepository).save(replyCaptor.capture());
+            Comment savedReply = replyCaptor.getValue();
+
+            assertThat(savedReply.getParentComment()).isEqualTo(parent);
+            assertThat(savedReply.getPost()).isEqualTo(post);
+            assertThat(savedReply.getUser()).isEqualTo(user);
+            assertThat(savedReply.getContent()).isEqualTo("답글 본문");
+
+            assertThat(response.commentId()).isEqualTo(302L);
+            assertThat(response.userNickname()).isEqualTo(user.getNickname());
+            assertThat(response.content()).isEqualTo("답글 본문");
+            assertThat(response.likeCount()).isZero();
+            assertThat(response.isLiked()).isFalse();
+            assertThat(response.isOwner()).isTrue();
+        }
+
+        @Test
+        void 발생시킨다_saveReply_principal에_userId가_없으면_인증실패_예외를() {
+            // given
+            CommentCreateRequest request = new CommentCreateRequest("답글 본문");
+            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-only"));
+
+            // when & then
+            assertThatThrownBy(() -> commentService.saveReply(principal, 301L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
+            verify(commentRepository, never()).save(any(Comment.class));
+        }
+
+        @Test
+        void 발생시킨다_saveReply_사용자가_존재하지_않으면_사용자없음_예외를() {
+            // given
+            CommentCreateRequest request = new CommentCreateRequest("답글 본문");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.saveReply(principal, 301L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+            verify(commentRepository, never()).save(any(Comment.class));
+        }
+
+        @Test
+        void 발생시킨다_saveReply_부모댓글이_없으면_댓글없음_예외를() {
+            // given
+            User user = createUser(1L);
+            CommentCreateRequest request = new CommentCreateRequest("답글 본문");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+            when(commentRepository.findByIdAndDeletedAtIsNull(301L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentService.saveReply(principal, 301L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_NOT_FOUND));
+            verify(commentRepository, never()).save(any(Comment.class));
+        }
+    }
+
     private User createUser(Long userId) {
         User user = new User();
         user.setId(userId);
