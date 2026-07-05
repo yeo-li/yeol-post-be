@@ -5,7 +5,7 @@ import com.yeo_li.yeol_post.domain.category.CategoryService;
 import com.yeo_li.yeol_post.domain.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
-import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.domain.post.dto.request.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;

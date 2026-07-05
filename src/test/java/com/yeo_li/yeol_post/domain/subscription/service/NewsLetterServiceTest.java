@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -27,11 +27,11 @@ class NewsLetterServiceTest {
     @Mock
     private MailService mailService;
 
-    @InjectMocks
     private NewsLetterService newsLetterService;
 
     @BeforeEach
     void setUp() {
+        newsLetterService = new NewsLetterService(mailService, new MailTemplateRenderer());
         ReflectionTestUtils.setField(newsLetterService, "frontendOrigin", "https://yeolpost.dev");
     }
 
@@ -101,6 +101,45 @@ class NewsLetterServiceTest {
 
             verify(mailService).sendHtmlMail(eq("failed@test.com"), anyString(), anyString());
             verify(mailService).sendHtmlMail(eq("success@test.com"), anyString(), anyString());
+        }
+    }
+
+    @Nested
+    class SendCommentNotificationTest {
+
+        @Test
+        void sendCommentNotification_댓글알림요청이_주어지면_치환된HTML메일을_발송한다() {
+            CommentMailCommand command = new CommentMailCommand(
+                "post-author@test.com",
+                101L,
+                10L,
+                "게시물 제목",
+                "댓글작성자",
+                "댓글 본문"
+            );
+
+            newsLetterService.sendCommentNotification(command);
+
+            ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailService).sendHtmlMail(eq("post-author@test.com"), subjectCaptor.capture(),
+                htmlCaptor.capture());
+
+            String subject = subjectCaptor.getValue();
+            String html = htmlCaptor.getValue();
+
+            assertThat(subject).isEqualTo("[yeolpost] 새 댓글이 달렸어요.");
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("댓글작성자");
+            assertThat(html).contains("댓글 본문");
+            assertThat(html).contains("https://yeolpost.dev/posts/10#comment-101");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{commentId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{commentAuthorNickname}");
+            assertThat(html).doesNotContain("{commentContent}");
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.yeo_li.yeol_post.domain.category.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
+import com.yeo_li.yeol_post.domain.post.dto.response.PostResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;

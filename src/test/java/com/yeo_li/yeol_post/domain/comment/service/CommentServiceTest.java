@@ -32,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,6 +52,9 @@ class CommentServiceTest {
 
     @Mock
     private OAuth2User principal;
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private CommentService commentService;
@@ -685,6 +689,7 @@ class CommentServiceTest {
         user.setKakaoId("kakao-" + userId);
         user.setName("사용자" + userId);
         user.setNickname("닉네임" + userId);
+        user.setEmail("user" + userId + "@test.com");
         user.setRole(Role.USER);
         return user;
     }
@@ -694,6 +699,7 @@ class CommentServiceTest {
         post.setId(postId);
         post.setTitle("게시물 제목");
         post.setContent("게시물 본문");
+        post.setUser(createUser(99L));
         post.setIsPublished(true);
         post.setIsDeleted(false);
         return post;
