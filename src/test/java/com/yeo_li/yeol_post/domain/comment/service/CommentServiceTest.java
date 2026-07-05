@@ -13,6 +13,7 @@ import com.yeo_li.yeol_post.domain.comment.domain.CommentLike;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
@@ -316,6 +317,22 @@ class CommentServiceTest {
             assertThat(response.likeCount()).isZero();
             assertThat(response.isLiked()).isFalse();
             assertThat(response.isOwner()).isTrue();
+
+            ArgumentCaptor<ReplyCreatedEvent> eventCaptor =
+                ArgumentCaptor.forClass(ReplyCreatedEvent.class);
+            verify(publisher).publishEvent(eventCaptor.capture());
+            ReplyCreatedEvent event = eventCaptor.getValue();
+
+            assertThat(event.replyId()).isEqualTo(302L);
+            assertThat(event.replyAuthorUserId()).isEqualTo(1L);
+            assertThat(event.replyAuthorNickname()).isEqualTo("닉네임1");
+            assertThat(event.replyContent()).isEqualTo("답글 본문");
+            assertThat(event.parentCommentId()).isEqualTo(301L);
+            assertThat(event.parentCommentAuthorUserId()).isEqualTo(2L);
+            assertThat(event.parentCommentAuthorEmail()).isEqualTo("user2@test.com");
+            assertThat(event.postId()).isEqualTo(10L);
+            assertThat(event.postTitle()).isEqualTo("게시물 제목");
+            assertThat(event.occurredAt()).isNotNull();
         }
 
         @Test

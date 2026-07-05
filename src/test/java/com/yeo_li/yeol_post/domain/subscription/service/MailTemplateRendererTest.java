@@ -42,5 +42,28 @@ class MailTemplateRendererTest {
             assertThat(html).contains("제목");
             assertThat(html).doesNotContain("{summary}");
         }
+
+        @Test
+        void render_답글알림템플릿의_placeholder를_치환한다() throws IOException {
+            String html = mailTemplateRenderer.render("mail/reply-notification.html", Map.of(
+                "frontendOrigin", "https://yeolpost.dev",
+                "postId", 10L,
+                "replyId", 201L,
+                "postTitle", "게시물 제목",
+                "replyAuthorNickname", "답글작성자",
+                "replyContent", "답글 본문"
+            ));
+
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("답글작성자");
+            assertThat(html).contains("답글 본문");
+            assertThat(html).contains("https://yeolpost.dev/posts/10#comment-201");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{replyId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{replyAuthorNickname}");
+            assertThat(html).doesNotContain("{replyContent}");
+        }
     }
 }

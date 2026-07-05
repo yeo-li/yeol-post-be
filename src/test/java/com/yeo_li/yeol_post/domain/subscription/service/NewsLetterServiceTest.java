@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -140,6 +141,45 @@ class NewsLetterServiceTest {
             assertThat(html).doesNotContain("{postTitle}");
             assertThat(html).doesNotContain("{commentAuthorNickname}");
             assertThat(html).doesNotContain("{commentContent}");
+        }
+    }
+
+    @Nested
+    class SendReplyNotificationTest {
+
+        @Test
+        void sendReplyNotification_답글알림요청이_주어지면_치환된HTML메일을_발송한다() {
+            ReplyMailCommand command = new ReplyMailCommand(
+                "comment-author@test.com",
+                201L,
+                10L,
+                "게시물 제목",
+                "답글작성자",
+                "답글 본문"
+            );
+
+            newsLetterService.sendReplyNotification(command);
+
+            ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailService).sendHtmlMail(eq("comment-author@test.com"), subjectCaptor.capture(),
+                htmlCaptor.capture());
+
+            String subject = subjectCaptor.getValue();
+            String html = htmlCaptor.getValue();
+
+            assertThat(subject).isEqualTo("[yeolpost] 새 답글이 달렸어요.");
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("답글작성자");
+            assertThat(html).contains("답글 본문");
+            assertThat(html).contains("https://yeolpost.dev/posts/10#comment-201");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{replyId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{replyAuthorNickname}");
+            assertThat(html).doesNotContain("{replyContent}");
         }
     }
 }

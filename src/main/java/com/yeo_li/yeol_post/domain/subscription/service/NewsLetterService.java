@@ -4,6 +4,7 @@ import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +138,33 @@ public class NewsLetterService {
             );
         } catch (IOException e) {
             log.error("{} 댓글 알림 메일 발송 실패", command.receiverEmail(), e);
+        }
+    }
+
+    public void sendReplyNotification(ReplyMailCommand command) {
+        if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
+            log.warn("답글 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}, replyId={}",
+                command.postId(), command.replyId());
+            return;
+        }
+
+        try {
+            String html = mailTemplateRenderer.render("mail/reply-notification.html", Map.of(
+                "frontendOrigin", frontendOrigin,
+                "postId", command.postId().toString(),
+                "replyId", command.replyId().toString(),
+                "postTitle", command.postTitle(),
+                "replyAuthorNickname", command.replyAuthorNickname(),
+                "replyContent", command.replyContent()
+            ));
+
+            mailService.sendHtmlMail(
+                command.receiverEmail(),
+                "[yeolpost] 새 답글이 달렸어요.",
+                html
+            );
+        } catch (IOException e) {
+            log.error("{} 답글 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
 }

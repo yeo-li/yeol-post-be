@@ -1,10 +1,12 @@
 package com.yeo_li.yeol_post.domain.subscription.event;
 
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
 import com.yeo_li.yeol_post.domain.post.event.CommentCreatedEvent;
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -40,4 +42,11 @@ public class SubscriptionEventHandler {
     public void handle(CommentCreatedEvent event) {
         newsLetterService.sendCommentNotification(CommentMailCommand.from(event));
     }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(ReplyCreatedEvent event) {
+        newsLetterService.sendReplyNotification(ReplyMailCommand.from(event));
+    }
+
 }

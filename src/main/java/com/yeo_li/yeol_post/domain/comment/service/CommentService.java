@@ -7,6 +7,7 @@ import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
@@ -121,6 +122,12 @@ public class CommentService {
         Comment reply = commentRepository.save(
             new Comment(sanitizedContent, parentComment.getPost(), user, parentComment)
         );
+
+        publisher.publishEvent(
+            new ReplyCreatedEvent(reply.getId(), reply.getUser().getId(), reply.getUser().getNickname(),
+                reply.getContent(), parentComment.getId(), parentComment.getUser().getId(),
+                parentComment.getUser().getEmail(), parentComment.getPost().getId(), parentComment.getPost().getTitle(),
+                LocalDateTime.now()));
 
         return convertCommentReplyResponse(userId, reply);
     }
