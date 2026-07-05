@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.like.domain.Like;
 import com.yeo_li.yeol_post.domain.like.dto.LikeResponse;
+import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.like.exception.LikeExceptionType;
 import com.yeo_li.yeol_post.domain.like.repository.LikeRepository;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
@@ -28,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +46,9 @@ class LikeServiceTest {
 
     @Mock
     private OAuth2User principal;
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private LikeService likeService;
@@ -167,6 +172,19 @@ class LikeServiceTest {
             verify(likeRepository).save(captor.capture());
             assertThat(captor.getValue().getUser()).isEqualTo(user);
             assertThat(captor.getValue().getPost()).isEqualTo(post);
+
+            ArgumentCaptor<PostLikedEvent> eventCaptor =
+                ArgumentCaptor.forClass(PostLikedEvent.class);
+            verify(publisher).publishEvent(eventCaptor.capture());
+            PostLikedEvent event = eventCaptor.getValue();
+
+            assertThat(event.postId()).isEqualTo(3L);
+            assertThat(event.postTitle()).isEqualTo("title");
+            assertThat(event.postAuthorUserId()).isEqualTo(99L);
+            assertThat(event.postAuthorEmail()).isEqualTo("user99@test.com");
+            assertThat(event.likerUserId()).isEqualTo(12L);
+            assertThat(event.likerNickname()).isEqualTo("닉네임12");
+            assertThat(event.occurredAt()).isNotNull();
         }
 
         @Test
@@ -242,6 +260,8 @@ class LikeServiceTest {
         user.setId(id);
         user.setKakaoId(kakaoId);
         user.setName("tester");
+        user.setNickname("닉네임" + id);
+        user.setEmail("user" + id + "@test.com");
         user.setRole(Role.USER);
         return user;
     }
@@ -251,6 +271,7 @@ class LikeServiceTest {
         post.setId(postId);
         post.setTitle("title");
         post.setContent("content");
+        post.setUser(createUser(99L, "kakao-post-author"));
         post.setIsPublished(true);
         post.setIsDeleted(false);
         return post;

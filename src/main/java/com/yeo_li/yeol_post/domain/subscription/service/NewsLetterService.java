@@ -4,6 +4,7 @@ import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import java.io.IOException;
 import java.util.List;
@@ -165,6 +166,31 @@ public class NewsLetterService {
             );
         } catch (IOException e) {
             log.error("{} 답글 알림 메일 발송 실패", command.receiverEmail(), e);
+        }
+    }
+
+    public void sendPostLikeNotification(PostLikeMailCommand command) {
+        if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
+            log.warn("게시물 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}",
+                command.postId());
+            return;
+        }
+
+        try {
+            String html = mailTemplateRenderer.render("mail/post-like-notification.html", Map.of(
+                "frontendOrigin", frontendOrigin,
+                "postId", command.postId().toString(),
+                "postTitle", command.postTitle(),
+                "likerNickname", command.likerNickname()
+            ));
+
+            mailService.sendHtmlMail(
+                command.receiverEmail(),
+                "[yeolpost] 새 좋아요가 눌렸어요.",
+                html
+            );
+        } catch (IOException e) {
+            log.error("{} 게시물 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
 }

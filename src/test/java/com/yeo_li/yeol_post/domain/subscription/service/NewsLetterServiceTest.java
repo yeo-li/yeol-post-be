@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import java.io.IOException;
 import java.util.List;
@@ -180,6 +181,40 @@ class NewsLetterServiceTest {
             assertThat(html).doesNotContain("{postTitle}");
             assertThat(html).doesNotContain("{replyAuthorNickname}");
             assertThat(html).doesNotContain("{replyContent}");
+        }
+    }
+
+    @Nested
+    class SendPostLikeNotificationTest {
+
+        @Test
+        void sendPostLikeNotification_게시물좋아요알림요청이_주어지면_치환된HTML메일을_발송한다() {
+            PostLikeMailCommand command = new PostLikeMailCommand(
+                "post-author@test.com",
+                10L,
+                "게시물 제목",
+                "좋아요작성자"
+            );
+
+            newsLetterService.sendPostLikeNotification(command);
+
+            ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailService).sendHtmlMail(eq("post-author@test.com"), subjectCaptor.capture(),
+                htmlCaptor.capture());
+
+            String subject = subjectCaptor.getValue();
+            String html = htmlCaptor.getValue();
+
+            assertThat(subject).isEqualTo("[yeolpost] 새 좋아요가 눌렸어요.");
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("좋아요작성자");
+            assertThat(html).contains("https://yeolpost.dev/posts/10");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{likerNickname}");
         }
     }
 }

@@ -65,5 +65,23 @@ class MailTemplateRendererTest {
             assertThat(html).doesNotContain("{replyAuthorNickname}");
             assertThat(html).doesNotContain("{replyContent}");
         }
+
+        @Test
+        void render_게시물좋아요알림템플릿의_placeholder를_치환한다() throws IOException {
+            String html = mailTemplateRenderer.render("mail/post-like-notification.html", Map.of(
+                "frontendOrigin", "https://yeolpost.dev",
+                "postId", 10L,
+                "postTitle", "게시물 제목",
+                "likerNickname", "좋아요작성자"
+            ));
+
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("좋아요작성자");
+            assertThat(html).contains("https://yeolpost.dev/posts/10");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{likerNickname}");
+        }
     }
 }

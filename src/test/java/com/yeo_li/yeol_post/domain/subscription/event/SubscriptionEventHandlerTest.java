@@ -6,8 +6,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
+import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
@@ -94,6 +96,35 @@ class SubscriptionEventHandlerTest {
             assertThat(command.postTitle()).isEqualTo("게시물 제목");
             assertThat(command.replyAuthorNickname()).isEqualTo("답글작성자");
             assertThat(command.replyContent()).isEqualTo("답글 본문");
+        }
+
+        @Test
+        void handle_게시물좋아요이벤트가_발생하면_좋아요알림메일발송을_요청한다() {
+            // given
+            PostLikedEvent event = new PostLikedEvent(
+                10L,
+                "게시물 제목",
+                99L,
+                "post-author@test.com",
+                1L,
+                "좋아요작성자",
+                LocalDateTime.now()
+            );
+
+            // when
+            subscriptionEventHandler.handle(event);
+
+            // then
+            ArgumentCaptor<PostLikeMailCommand> commandCaptor =
+                ArgumentCaptor.forClass(PostLikeMailCommand.class);
+
+            verify(newsLetterService).sendPostLikeNotification(commandCaptor.capture());
+            PostLikeMailCommand command = commandCaptor.getValue();
+
+            assertThat(command.receiverEmail()).isEqualTo("post-author@test.com");
+            assertThat(command.postId()).isEqualTo(10L);
+            assertThat(command.postTitle()).isEqualTo("게시물 제목");
+            assertThat(command.likerNickname()).isEqualTo("좋아요작성자");
         }
     }
 }
