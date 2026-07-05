@@ -3,6 +3,7 @@ package com.yeo_li.yeol_post.domain.subscription.service;
 import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
@@ -191,6 +192,33 @@ public class NewsLetterService {
             );
         } catch (IOException e) {
             log.error("{} 게시물 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
+        }
+    }
+
+    public void sendCommentLikeNotification(CommentLikeMailCommand command) {
+        if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
+            log.warn("댓글 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}, commentId={}",
+                command.postId(), command.commentId());
+            return;
+        }
+
+        try {
+            String html = mailTemplateRenderer.render("mail/comment-like-notification.html", Map.of(
+                "frontendOrigin", frontendOrigin,
+                "postId", command.postId().toString(),
+                "commentId", command.commentId().toString(),
+                "postTitle", command.postTitle(),
+                "likerNickname", command.likerNickname(),
+                "commentContent", command.commentContent()
+            ));
+
+            mailService.sendHtmlMail(
+                command.receiverEmail(),
+                "[yeolpost] 댓글에 새 좋아요가 눌렸어요.",
+                html
+            );
+        } catch (IOException e) {
+            log.error("{} 댓글 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
 }

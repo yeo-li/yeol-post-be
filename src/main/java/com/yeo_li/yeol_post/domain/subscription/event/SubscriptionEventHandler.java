@@ -1,11 +1,13 @@
 package com.yeo_li.yeol_post.domain.subscription.event;
 
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
 import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
 import com.yeo_li.yeol_post.domain.post.event.CommentCreatedEvent;
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
@@ -55,6 +57,12 @@ public class SubscriptionEventHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(PostLikedEvent event) {
         newsLetterService.sendPostLikeNotification(PostLikeMailCommand.from(event));
+    }
+
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(CommentLikedEvent event) {
+        newsLetterService.sendCommentLikeNotification(CommentLikeMailCommand.from(event));
     }
 
 }

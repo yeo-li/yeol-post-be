@@ -83,5 +83,28 @@ class MailTemplateRendererTest {
             assertThat(html).doesNotContain("{postTitle}");
             assertThat(html).doesNotContain("{likerNickname}");
         }
+
+        @Test
+        void render_댓글좋아요알림템플릿의_placeholder를_치환한다() throws IOException {
+            String html = mailTemplateRenderer.render("mail/comment-like-notification.html", Map.of(
+                "frontendOrigin", "https://yeolpost.dev",
+                "postId", 10L,
+                "commentId", 101L,
+                "postTitle", "게시물 제목",
+                "likerNickname", "좋아요작성자",
+                "commentContent", "댓글 본문"
+            ));
+
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("좋아요작성자");
+            assertThat(html).contains("댓글 본문");
+            assertThat(html).contains("https://yeolpost.dev/posts/10#comment-101");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{commentId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{likerNickname}");
+            assertThat(html).doesNotContain("{commentContent}");
+        }
     }
 }

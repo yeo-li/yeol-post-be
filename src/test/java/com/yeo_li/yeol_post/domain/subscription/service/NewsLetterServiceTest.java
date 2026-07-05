@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
@@ -215,6 +216,45 @@ class NewsLetterServiceTest {
             assertThat(html).doesNotContain("{postId}");
             assertThat(html).doesNotContain("{postTitle}");
             assertThat(html).doesNotContain("{likerNickname}");
+        }
+    }
+
+    @Nested
+    class SendCommentLikeNotificationTest {
+
+        @Test
+        void sendCommentLikeNotification_댓글좋아요알림요청이_주어지면_치환된HTML메일을_발송한다() {
+            CommentLikeMailCommand command = new CommentLikeMailCommand(
+                "comment-author@test.com",
+                101L,
+                10L,
+                "게시물 제목",
+                "좋아요작성자",
+                "댓글 본문"
+            );
+
+            newsLetterService.sendCommentLikeNotification(command);
+
+            ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+
+            verify(mailService).sendHtmlMail(eq("comment-author@test.com"), subjectCaptor.capture(),
+                htmlCaptor.capture());
+
+            String subject = subjectCaptor.getValue();
+            String html = htmlCaptor.getValue();
+
+            assertThat(subject).isEqualTo("[yeolpost] 댓글에 새 좋아요가 눌렸어요.");
+            assertThat(html).contains("게시물 제목");
+            assertThat(html).contains("좋아요작성자");
+            assertThat(html).contains("댓글 본문");
+            assertThat(html).contains("https://yeolpost.dev/posts/10#comment-101");
+            assertThat(html).doesNotContain("{frontendOrigin}");
+            assertThat(html).doesNotContain("{postId}");
+            assertThat(html).doesNotContain("{commentId}");
+            assertThat(html).doesNotContain("{postTitle}");
+            assertThat(html).doesNotContain("{likerNickname}");
+            assertThat(html).doesNotContain("{commentContent}");
         }
     }
 }

@@ -7,6 +7,7 @@ import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
 import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
@@ -150,6 +151,17 @@ public class CommentService {
         }
 
         commentLikeRepository.save(new CommentLike(user, comment));
+        publisher.publishEvent(new CommentLikedEvent(
+            comment.getId(),
+            comment.getContent(),
+            comment.getUser().getId(),
+            comment.getUser().getEmail(),
+            comment.getPost().getId(),
+            comment.getPost().getTitle(),
+            user.getId(),
+            user.getNickname(),
+            LocalDateTime.now()
+        ));
     }
 
     @Transactional

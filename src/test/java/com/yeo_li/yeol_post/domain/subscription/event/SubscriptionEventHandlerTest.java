@@ -5,10 +5,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
 import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
@@ -125,6 +127,39 @@ class SubscriptionEventHandlerTest {
             assertThat(command.postId()).isEqualTo(10L);
             assertThat(command.postTitle()).isEqualTo("게시물 제목");
             assertThat(command.likerNickname()).isEqualTo("좋아요작성자");
+        }
+
+        @Test
+        void handle_댓글좋아요이벤트가_발생하면_댓글좋아요알림메일발송을_요청한다() {
+            // given
+            CommentLikedEvent event = new CommentLikedEvent(
+                101L,
+                "댓글 본문",
+                2L,
+                "comment-author@test.com",
+                10L,
+                "게시물 제목",
+                1L,
+                "좋아요작성자",
+                LocalDateTime.now()
+            );
+
+            // when
+            subscriptionEventHandler.handle(event);
+
+            // then
+            ArgumentCaptor<CommentLikeMailCommand> commandCaptor =
+                ArgumentCaptor.forClass(CommentLikeMailCommand.class);
+
+            verify(newsLetterService).sendCommentLikeNotification(commandCaptor.capture());
+            CommentLikeMailCommand command = commandCaptor.getValue();
+
+            assertThat(command.receiverEmail()).isEqualTo("comment-author@test.com");
+            assertThat(command.commentId()).isEqualTo(101L);
+            assertThat(command.postId()).isEqualTo(10L);
+            assertThat(command.postTitle()).isEqualTo("게시물 제목");
+            assertThat(command.likerNickname()).isEqualTo("좋아요작성자");
+            assertThat(command.commentContent()).isEqualTo("댓글 본문");
         }
     }
 }
