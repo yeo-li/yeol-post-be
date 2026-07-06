@@ -94,7 +94,7 @@ public class NewsLetterService {
                 "[yeolpost] 구독이 완료되었습니다.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{}발송 실패", subscription.getEmail(), e);
         }
     }
@@ -111,7 +111,7 @@ public class NewsLetterService {
                 "[yeolpost] 구독이 해지되었습니다.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{}발송 실패", subscription.getEmail(), e);
         }
     }
@@ -138,7 +138,7 @@ public class NewsLetterService {
                 "[yeolpost] 새 댓글이 달렸어요.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{} 댓글 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
@@ -165,7 +165,7 @@ public class NewsLetterService {
                 "[yeolpost] 새 답글이 달렸어요.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{} 답글 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
@@ -190,7 +190,7 @@ public class NewsLetterService {
                 "[yeolpost] 새 좋아요가 눌렸어요.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{} 게시물 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }
@@ -217,7 +217,7 @@ public class NewsLetterService {
                 "[yeolpost] 댓글에 새 좋아요가 눌렸어요.",
                 html
             );
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             log.error("{} 댓글 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
         }
     }

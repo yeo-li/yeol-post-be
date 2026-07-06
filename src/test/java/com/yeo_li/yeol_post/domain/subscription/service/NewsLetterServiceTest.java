@@ -144,6 +144,27 @@ class NewsLetterServiceTest {
             assertThat(html).doesNotContain("{commentAuthorNickname}");
             assertThat(html).doesNotContain("{commentContent}");
         }
+
+        @Test
+        void sendCommentNotification_메일발송이_실패해도_예외를_전파하지_않는다() {
+            CommentMailCommand command = new CommentMailCommand(
+                "post-author@test.com",
+                101L,
+                10L,
+                "게시물 제목",
+                "댓글작성자",
+                "댓글 본문"
+            );
+
+            doThrow(new IllegalStateException("메일 발송 실패"))
+                .when(mailService)
+                .sendHtmlMail(eq("post-author@test.com"), anyString(), anyString());
+
+            assertThatCode(() -> newsLetterService.sendCommentNotification(command))
+                .doesNotThrowAnyException();
+
+            verify(mailService).sendHtmlMail(eq("post-author@test.com"), anyString(), anyString());
+        }
     }
 
     @Nested
