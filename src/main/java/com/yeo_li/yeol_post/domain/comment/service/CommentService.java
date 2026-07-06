@@ -7,10 +7,13 @@ import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentListResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.domain.post.event.CommentCreatedEvent;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
@@ -22,6 +25,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +38,8 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public CommentResponse saveComment(OAuth2User principal, Long postId,
@@ -56,6 +62,10 @@ public class CommentService {
         Comment savedComment = commentRepository.save(
             new Comment(sanitizedContent, post, user, null)
         );
+
+        publisher.publishEvent(new CommentCreatedEvent(savedComment.getId(), savedComment.getUser().getId(),
+            savedComment.getUser().getNickname(), savedComment.getContent(), post.getId(),
+            post.getUser().getId(), post.getUser().getEmail(), post.getTitle(), LocalDateTime.now()));
 
         return convertCommentResponse(userId, savedComment);
     }
@@ -114,6 +124,12 @@ public class CommentService {
             new Comment(sanitizedContent, parentComment.getPost(), user, parentComment)
         );
 
+        publisher.publishEvent(
+            new ReplyCreatedEvent(reply.getId(), reply.getUser().getId(), reply.getUser().getNickname(),
+                reply.getContent(), parentComment.getId(), parentComment.getUser().getId(),
+                parentComment.getUser().getEmail(), parentComment.getPost().getId(), parentComment.getPost().getTitle(),
+                LocalDateTime.now()));
+
         return convertCommentReplyResponse(userId, reply);
     }
 
@@ -135,6 +151,17 @@ public class CommentService {
         }
 
         commentLikeRepository.save(new CommentLike(user, comment));
+        publisher.publishEvent(new CommentLikedEvent(
+            comment.getId(),
+            comment.getContent(),
+            comment.getUser().getId(),
+            comment.getUser().getEmail(),
+            comment.getPost().getId(),
+            comment.getPost().getTitle(),
+            user.getId(),
+            user.getNickname(),
+            LocalDateTime.now()
+        ));
     }
 
     @Transactional

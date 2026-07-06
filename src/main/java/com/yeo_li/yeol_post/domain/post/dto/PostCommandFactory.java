@@ -5,6 +5,8 @@ import com.yeo_li.yeol_post.domain.category.CategoryRepository;
 import com.yeo_li.yeol_post.domain.post.command.DraftPostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.command.PostCreateCommand;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
+import com.yeo_li.yeol_post.domain.post.dto.command.PostMailCommand;
+import com.yeo_li.yeol_post.domain.post.dto.request.PostCreateRequest;
 import com.yeo_li.yeol_post.domain.post.exception.PostExceptionType;
 import com.yeo_li.yeol_post.domain.tag.TagRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;

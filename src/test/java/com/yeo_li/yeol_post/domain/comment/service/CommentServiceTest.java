@@ -13,6 +13,8 @@ import com.yeo_li.yeol_post.domain.comment.domain.CommentLike;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentResponse;
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
 import com.yeo_li.yeol_post.domain.comment.exception.CommentExceptionType;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentLikeRepository;
 import com.yeo_li.yeol_post.domain.comment.repository.CommentRepository;
@@ -32,6 +34,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,6 +54,9 @@ class CommentServiceTest {
 
     @Mock
     private OAuth2User principal;
+
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private CommentService commentService;
@@ -312,6 +318,22 @@ class CommentServiceTest {
             assertThat(response.likeCount()).isZero();
             assertThat(response.isLiked()).isFalse();
             assertThat(response.isOwner()).isTrue();
+
+            ArgumentCaptor<ReplyCreatedEvent> eventCaptor =
+                ArgumentCaptor.forClass(ReplyCreatedEvent.class);
+            verify(publisher).publishEvent(eventCaptor.capture());
+            ReplyCreatedEvent event = eventCaptor.getValue();
+
+            assertThat(event.replyId()).isEqualTo(302L);
+            assertThat(event.replyAuthorUserId()).isEqualTo(1L);
+            assertThat(event.replyAuthorNickname()).isEqualTo("닉네임1");
+            assertThat(event.replyContent()).isEqualTo("답글 본문");
+            assertThat(event.parentCommentId()).isEqualTo(301L);
+            assertThat(event.parentCommentAuthorUserId()).isEqualTo(2L);
+            assertThat(event.parentCommentAuthorEmail()).isEqualTo("user2@test.com");
+            assertThat(event.postId()).isEqualTo(10L);
+            assertThat(event.postTitle()).isEqualTo("게시물 제목");
+            assertThat(event.occurredAt()).isNotNull();
         }
 
         @Test
@@ -517,7 +539,9 @@ class CommentServiceTest {
         void 저장한다_likeComment_유효한요청이면_댓글좋아요를_저장한다() {
             // given
             User user = createUser(1L);
+            Post post = createPost(10L);
             Comment comment = createComment(401L, "댓글", createUser(2L));
+            comment.setPost(post);
             when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(commentRepository.findByIdAndDeletedAtIsNull(401L)).thenReturn(
@@ -532,6 +556,21 @@ class CommentServiceTest {
             verify(commentLikeRepository).save(captor.capture());
             assertThat(captor.getValue().getUser()).isEqualTo(user);
             assertThat(captor.getValue().getComment()).isEqualTo(comment);
+
+            ArgumentCaptor<CommentLikedEvent> eventCaptor =
+                ArgumentCaptor.forClass(CommentLikedEvent.class);
+            verify(publisher).publishEvent(eventCaptor.capture());
+            CommentLikedEvent event = eventCaptor.getValue();
+
+            assertThat(event.commentId()).isEqualTo(401L);
+            assertThat(event.commentContent()).isEqualTo("댓글");
+            assertThat(event.commentAuthorUserId()).isEqualTo(2L);
+            assertThat(event.commentAuthorEmail()).isEqualTo("user2@test.com");
+            assertThat(event.postId()).isEqualTo(10L);
+            assertThat(event.postTitle()).isEqualTo("게시물 제목");
+            assertThat(event.likerUserId()).isEqualTo(1L);
+            assertThat(event.likerNickname()).isEqualTo("닉네임1");
+            assertThat(event.occurredAt()).isNotNull();
         }
 
         @Test
@@ -550,6 +589,7 @@ class CommentServiceTest {
 
             // then
             verify(commentLikeRepository, never()).save(any(CommentLike.class));
+            verify(publisher, never()).publishEvent(any(CommentLikedEvent.class));
         }
 
         @Test
@@ -685,6 +725,7 @@ class CommentServiceTest {
         user.setKakaoId("kakao-" + userId);
         user.setName("사용자" + userId);
         user.setNickname("닉네임" + userId);
+        user.setEmail("user" + userId + "@test.com");
         user.setRole(Role.USER);
         return user;
     }
@@ -694,6 +735,7 @@ class CommentServiceTest {
         post.setId(postId);
         post.setTitle("게시물 제목");
         post.setContent("게시물 본문");
+        post.setUser(createUser(99L));
         post.setIsPublished(true);
         post.setIsDeleted(false);
         return post;

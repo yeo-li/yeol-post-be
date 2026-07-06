@@ -7,7 +7,7 @@ import com.yeo_li.yeol_post.domain.category.dto.response.CategoryResponse;
 import com.yeo_li.yeol_post.domain.category.exception.CategoryException;
 import com.yeo_li.yeol_post.domain.category.exception.CategoryExceptionType;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
-import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
+import com.yeo_li.yeol_post.domain.post.dto.response.PostResponse;
 import com.yeo_li.yeol_post.domain.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
 import jakarta.transaction.Transactional;

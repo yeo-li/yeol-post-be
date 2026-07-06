@@ -1,6 +1,6 @@
 package com.yeo_li.yeol_post.global.common.swagger;
 
-import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
+import com.yeo_li.yeol_post.domain.post.dto.response.PostResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
