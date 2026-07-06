@@ -5,10 +5,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.yeo_li.yeol_post.domain.comment.event.CommentLikedEvent;
+import com.yeo_li.yeol_post.domain.comment.event.ReplyCreatedEvent;
+import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.subscription.command.AnnouncementMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
+import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -57,6 +64,102 @@ class SubscriptionEventHandlerTest {
             verify(newsLetterService).sendAnnouncements(eq(subscriptions), commandCaptor.capture());
             assertThat(commandCaptor.getValue().title()).isEqualTo("서비스 점검 안내");
             assertThat(commandCaptor.getValue().content()).isEqualTo("<p>점검 공지 본문</p>");
+        }
+
+        @Test
+        void handle_답글생성이벤트가_발생하면_답글알림메일발송을_요청한다() {
+            // given
+            ReplyCreatedEvent event = new ReplyCreatedEvent(
+                201L,
+                1L,
+                "답글작성자",
+                "답글 본문",
+                101L,
+                2L,
+                "comment-author@test.com",
+                10L,
+                "게시물 제목",
+                LocalDateTime.now()
+            );
+
+            // when
+            subscriptionEventHandler.handle(event);
+
+            // then
+            ArgumentCaptor<ReplyMailCommand> commandCaptor =
+                ArgumentCaptor.forClass(ReplyMailCommand.class);
+
+            verify(newsLetterService).sendReplyNotification(commandCaptor.capture());
+            ReplyMailCommand command = commandCaptor.getValue();
+
+            assertThat(command.receiverEmail()).isEqualTo("comment-author@test.com");
+            assertThat(command.replyId()).isEqualTo(201L);
+            assertThat(command.postId()).isEqualTo(10L);
+            assertThat(command.postTitle()).isEqualTo("게시물 제목");
+            assertThat(command.replyAuthorNickname()).isEqualTo("답글작성자");
+            assertThat(command.replyContent()).isEqualTo("답글 본문");
+        }
+
+        @Test
+        void handle_게시물좋아요이벤트가_발생하면_좋아요알림메일발송을_요청한다() {
+            // given
+            PostLikedEvent event = new PostLikedEvent(
+                10L,
+                "게시물 제목",
+                99L,
+                "post-author@test.com",
+                1L,
+                "좋아요작성자",
+                LocalDateTime.now()
+            );
+
+            // when
+            subscriptionEventHandler.handle(event);
+
+            // then
+            ArgumentCaptor<PostLikeMailCommand> commandCaptor =
+                ArgumentCaptor.forClass(PostLikeMailCommand.class);
+
+            verify(newsLetterService).sendPostLikeNotification(commandCaptor.capture());
+            PostLikeMailCommand command = commandCaptor.getValue();
+
+            assertThat(command.receiverEmail()).isEqualTo("post-author@test.com");
+            assertThat(command.postId()).isEqualTo(10L);
+            assertThat(command.postTitle()).isEqualTo("게시물 제목");
+            assertThat(command.likerNickname()).isEqualTo("좋아요작성자");
+        }
+
+        @Test
+        void handle_댓글좋아요이벤트가_발생하면_댓글좋아요알림메일발송을_요청한다() {
+            // given
+            CommentLikedEvent event = new CommentLikedEvent(
+                101L,
+                "댓글 본문",
+                2L,
+                "comment-author@test.com",
+                10L,
+                "게시물 제목",
+                1L,
+                "좋아요작성자",
+                LocalDateTime.now()
+            );
+
+            // when
+            subscriptionEventHandler.handle(event);
+
+            // then
+            ArgumentCaptor<CommentLikeMailCommand> commandCaptor =
+                ArgumentCaptor.forClass(CommentLikeMailCommand.class);
+
+            verify(newsLetterService).sendCommentLikeNotification(commandCaptor.capture());
+            CommentLikeMailCommand command = commandCaptor.getValue();
+
+            assertThat(command.receiverEmail()).isEqualTo("comment-author@test.com");
+            assertThat(command.commentId()).isEqualTo(101L);
+            assertThat(command.postId()).isEqualTo(10L);
+            assertThat(command.postTitle()).isEqualTo("게시물 제목");
+            assertThat(command.likerNickname()).isEqualTo("좋아요작성자");
+            assertThat(command.commentContent()).isEqualTo("댓글 본문");
         }
     }
 }

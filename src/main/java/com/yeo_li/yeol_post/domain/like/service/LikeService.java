@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.like.service;
 
 import com.yeo_li.yeol_post.domain.like.domain.Like;
 import com.yeo_li.yeol_post.domain.like.dto.LikeResponse;
+import com.yeo_li.yeol_post.domain.like.event.PostLikedEvent;
 import com.yeo_li.yeol_post.domain.like.exception.LikeExceptionType;
 import com.yeo_li.yeol_post.domain.like.repository.LikeRepository;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
@@ -10,8 +11,10 @@ import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final ApplicationEventPublisher publisher;
 
 
     public LikeResponse getLikes(OAuth2User principal, Long postId) {
@@ -71,6 +75,15 @@ public class LikeService {
         }
 
         likeRepository.save(new Like(user, post));
+        publisher.publishEvent(new PostLikedEvent(
+            post.getId(),
+            post.getTitle(),
+            post.getUser().getId(),
+            post.getUser().getEmail(),
+            user.getId(),
+            user.getNickname(),
+            LocalDateTime.now()
+        ));
     }
 
     @Transactional

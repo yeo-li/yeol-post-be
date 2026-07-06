@@ -1,10 +1,10 @@
 package com.yeo_li.yeol_post.domain.post.controller;
 
 import com.yeo_li.yeol_post.domain.post.dto.PostCommandFactory;
-import com.yeo_li.yeol_post.domain.post.dto.PostCreateRequest;
-import com.yeo_li.yeol_post.domain.post.dto.PostResponse;
-import com.yeo_li.yeol_post.domain.post.dto.PostUpdateRequest;
+import com.yeo_li.yeol_post.domain.post.dto.request.PostCreateRequest;
+import com.yeo_li.yeol_post.domain.post.dto.request.PostUpdateRequest;
 import com.yeo_li.yeol_post.domain.post.dto.response.DraftPostCreateResponse;
+import com.yeo_li.yeol_post.domain.post.dto.response.PostResponse;
 import com.yeo_li.yeol_post.domain.post.service.DraftPostService;
 import com.yeo_li.yeol_post.domain.post.service.PostService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
