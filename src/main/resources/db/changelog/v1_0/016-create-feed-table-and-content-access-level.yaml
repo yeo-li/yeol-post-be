@@ -1,0 +1,111 @@
+databaseChangeLog:
+  - changeSet:
+      id: 033-add-user-content-access-level-column
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: user }
+          - not:
+              - columnExists:
+                  tableName: user
+                  columnName: content_access_level
+      changes:
+        - addColumn:
+            tableName: user
+            columns:
+              - column:
+                  name: content_access_level
+                  type: VARCHAR(20)
+                  defaultValue: PUBLIC
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 034-create-feed-table
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: feed
+      changes:
+        - createTable:
+            tableName: feed
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: content
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: required_access_level
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted_at
+                  type: DATETIME(6)
+              - column:
+                  name: author_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 035-create-index-feed-author-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed }
+          - columnExists:
+              tableName: feed
+              columnName: author_id
+          - not:
+              - indexExists:
+                  tableName: feed
+                  indexName: idx_feed_author_id
+      changes:
+        - createIndex:
+            tableName: feed
+            indexName: idx_feed_author_id
+            columns:
+              - column: { name: author_id }
+
+  - changeSet:
+      id: 036-add-fk-feed-author
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: feed
+              columnName: author_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_feed_author
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: feed
+            baseColumnNames: author_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_feed_author
+            onDelete: RESTRICT
+            onUpdate: RESTRICT

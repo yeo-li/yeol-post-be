@@ -108,7 +108,8 @@ public class SecurityConfig {
                     "/api/v1/visitors/**",
                     "/api/v1/subscriptions/**",
                     "/api/v1/users/me",
-                    "/api/v1/likes/**"
+                    "/api/v1/likes/**",
+                    "/api/v1/feeds"
                 ).permitAll()
 
                 // public write endpoint
@@ -126,17 +127,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/posts",
                     "/api/v1/categories",
-                    "/api/v1/images"
+                    "/api/v1/images",
+                    "/api/v1/feeds"
                 ).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH,
                     "/api/v1/posts/**",
                     "/api/v1/categories/**",
-                    "/api/v1/drafts/**"
+                    "/api/v1/drafts/**",
+                    "/api/v1/feeds/**"
                 ).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/users/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE,
                     "/api/v1/posts/**",
-                    "/api/v1/categories/**"
+                    "/api/v1/categories/**",
+                    "/api/v1/feeds/**"
                 ).hasRole("ADMIN")
                 .requestMatchers("/api/v1/**").authenticated()
                 .anyRequest().authenticated()
