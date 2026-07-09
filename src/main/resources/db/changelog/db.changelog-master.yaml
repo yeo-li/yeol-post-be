@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/v1_0/014-create-comment-like-table.yaml
   - include:
       file: db/changelog/v1_0/015-create-comment-table.yaml
+  - include:
+      file: db/changelog/v1_0/016-create-feed-table-and-content-access-level.yaml

@@ -3,6 +3,7 @@ package com.yeo_li.yeol_post.domain.user.domain;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.subscription.domain.Subscription;
 import com.yeo_li.yeol_post.global.common.entity.BaseTimeEntity;
+import com.yeo_li.yeol_post.global.common.entity.ContentAccessLevel;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -51,6 +52,11 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ContentAccessLevel contentAccessLevel = ContentAccessLevel.PUBLIC;
 
     @Nullable
     private LocalDateTime deletedAt;
