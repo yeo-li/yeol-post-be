@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 037-increase-feed-content-length
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed }
+          - columnExists:
+              tableName: feed
+              columnName: content
+      changes:
+        - modifyDataType:
+            tableName: feed
+            columnName: content
+            newDataType: VARCHAR(2000)
