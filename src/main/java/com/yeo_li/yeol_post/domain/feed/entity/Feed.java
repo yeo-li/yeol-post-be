@@ -30,8 +30,8 @@ public class Feed extends BaseTimeEntity {
     private Long id;
 
     @NotBlank
-    @Size(max = 500)
-    @Column(length = 500, nullable = false)
+    @Size(max = 2000)
+    @Column(length = 2000, nullable = false)
     private String content;
 
     @NotNull

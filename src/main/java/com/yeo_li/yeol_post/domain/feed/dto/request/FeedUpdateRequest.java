@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "피드 수정 요청")
 public record FeedUpdateRequest(
     @Schema(description = "수정할 피드 내용", example = "수정된 짧은 기록")
-    @Size(max = 500, message = "피드는 500자 이하로 입력해주세요.")
+    @Size(max = 2000, message = "피드는 2000자 이하로 입력해주세요.")
     String content,
 
     @Schema(description = "수정할 피드 접근 권한", example = "LIMITED")
