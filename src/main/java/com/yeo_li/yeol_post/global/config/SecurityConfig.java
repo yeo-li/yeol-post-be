@@ -126,13 +126,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/feeds").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/feeds/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/feeds/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/images").authenticated()
 
                 // admin endpoint
                 .requestMatchers("/api/v1/drafts/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST,
                     "/api/v1/posts",
-                    "/api/v1/categories",
-                    "/api/v1/images"
+                    "/api/v1/categories"
                 ).hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH,
                     "/api/v1/posts/**",
