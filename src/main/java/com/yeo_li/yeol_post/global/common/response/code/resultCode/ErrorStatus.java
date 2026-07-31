@@ -17,6 +17,7 @@ public enum ErrorStatus implements BaseCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBAL404", "리소스를 찾을 수 없음"),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "GLOBAL405", "허용되지 않는 메서드"),
     CONFLICT(HttpStatus.CONFLICT, "GLOBAL409", "리소스 충돌"),
+    PAYLOAD_TOO_LARGE(HttpStatus.PAYLOAD_TOO_LARGE, "GLOBAL413", "요청 본문이 너무 큽니다"),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "GLOBAL415", "지원하지 않는 미디어 타입"),
 
     // 검증 에러

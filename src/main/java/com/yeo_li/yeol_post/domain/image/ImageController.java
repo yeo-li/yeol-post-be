@@ -16,6 +16,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -60,10 +61,11 @@ public class ImageController {
             content = @Content(mediaType = "multipart/form-data",
                 schema = @Schema(type = "string", format = "binary"))
         )
-        @RequestParam("file") MultipartFile file
+        @RequestParam("file") MultipartFile file,
+        Authentication authentication
     ) {
 
-        ImageService.StoredImage storedImage = imageService.store(file);
+        ImageService.StoredImage storedImage = imageService.store(file, isAdmin(authentication));
         ImageUploadResponse response = new ImageUploadResponse(storedImage.url());
         return ResponseEntity
             .status(HttpStatus.OK)
@@ -90,5 +92,10 @@ public class ImageController {
             .contentType(mediaType)
             .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic())
             .body(resource);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 }
