@@ -123,6 +123,33 @@ class ImageServiceTest {
             );
     }
 
+    @Test
+    void store_관리자면_허용_용량을_초과해도_저장한다() throws IOException {
+        setupRequestContext();
+        ImageService imageService = new ImageService(uploadDir.toString(), DataSize.ofBytes(10));
+        MockMultipartFile file = new MockMultipartFile(
+            "file",
+            "sample.png",
+            "image/png",
+            pngBytes()
+        );
+
+        ImageService.StoredImage storedImage = imageService.store(file, true);
+
+        Path savedFile = uploadDir.resolve(storedImage.filename());
+        assertThat(Files.exists(savedFile)).isTrue();
+        assertThat(Files.readAllBytes(savedFile))
+            .startsWith(PNG_SIGNATURE);
+    }
+
+    private void setupRequestContext() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setContextPath("");
+        request.setServerName("localhost");
+        request.setServerPort(8080);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+    }
+
     private byte[] pngBytes() throws IOException {
         BufferedImage image = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
         image.setRGB(0, 0, Color.RED.getRGB());

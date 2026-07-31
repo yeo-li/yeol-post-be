@@ -55,7 +55,11 @@ public class ImageService {
     }
 
     public StoredImage store(MultipartFile file) {
-        byte[] bytes = readAndValidateFileBytes(file);
+        return store(file, false);
+    }
+
+    public StoredImage store(MultipartFile file, boolean allowOversizedImage) {
+        byte[] bytes = readAndValidateFileBytes(file, allowOversizedImage);
         ImageFormat imageFormat = validateImage(file, bytes);
         BufferedImage image = decodeImage(bytes);
 
@@ -102,12 +106,12 @@ public class ImageService {
         return resolveFormatFromFilename(filename).mediaType;
     }
 
-    private byte[] readAndValidateFileBytes(MultipartFile file) {
+    private byte[] readAndValidateFileBytes(MultipartFile file, boolean allowOversizedImage) {
         if (file == null || file.isEmpty()) {
             throw new GeneralException(ErrorStatus.BAD_REQUEST);
         }
 
-        if (file.getSize() > maxFileSizeBytes) {
+        if (!allowOversizedImage && file.getSize() > maxFileSizeBytes) {
             throw new GeneralException(ErrorStatus.PAYLOAD_TOO_LARGE);
         }
 
@@ -116,7 +120,7 @@ public class ImageService {
             if (bytes.length == 0) {
                 throw new GeneralException(ErrorStatus.BAD_REQUEST);
             }
-            if (bytes.length > maxFileSizeBytes) {
+            if (!allowOversizedImage && bytes.length > maxFileSizeBytes) {
                 throw new GeneralException(ErrorStatus.PAYLOAD_TOO_LARGE);
             }
             return bytes;
