@@ -5,6 +5,8 @@ import com.yeo_li.yeol_post.domain.feed.dto.request.FeedUpdateRequest;
 import com.yeo_li.yeol_post.domain.feed.dto.response.FeedResponse;
 import com.yeo_li.yeol_post.domain.feed.entity.Feed;
 import com.yeo_li.yeol_post.domain.feed.exception.FeedExceptionType;
+import com.yeo_li.yeol_post.domain.feed.repository.FeedLikeCount;
+import com.yeo_li.yeol_post.domain.feed.repository.FeedLikeRepository;
 import com.yeo_li.yeol_post.domain.feed.repository.FeedRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
@@ -12,8 +14,14 @@ import com.yeo_li.yeol_post.global.common.entity.ContentAccessLevel;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,6 +36,7 @@ public class FeedService {
 
     private final UserRepository userRepository;
     private final FeedRepository feedRepository;
+    private final FeedLikeRepository feedLikeRepository;
 
     public List<FeedResponse> getFeeds(OAuth2User principal) {
         Long userId = getUserId(principal);
@@ -73,34 +82,46 @@ public class FeedService {
     }
 
     private List<FeedResponse> convertFeedResponseList(List<Feed> feeds, User viewer) {
+        List<Feed> activeFeeds = filterActiveFeeds(feeds);
+        FeedLikeContext likeContext = getFeedLikeContext(activeFeeds, viewer.getId());
         List<FeedResponse> feedResponses = new ArrayList<>();
-        for (Feed feed : feeds) {
-            if (feed.getDeletedAt() == null) {
-                feedResponses.add(convertFeedResponse(feed, viewer));
-            }
+        for (Feed feed : activeFeeds) {
+            feedResponses.add(convertFeedResponse(feed, viewer, likeContext));
         }
         return feedResponses;
     }
 
-    private FeedResponse convertFeedResponse(Feed feed, User user) {
+    private List<Feed> filterActiveFeeds(List<Feed> feeds) {
+        List<Feed> activeFeeds = new ArrayList<>();
+        for (Feed feed : feeds) {
+            if (feed.getDeletedAt() == null) {
+                activeFeeds.add(feed);
+            }
+        }
+        return activeFeeds;
+    }
+
+    private FeedResponse convertFeedResponse(Feed feed, User user, FeedLikeContext likeContext) {
         return new FeedResponse(feed.getId(), feed.getAuthor().getNickname(), feed.getContent(),
             feed.getRequiredAccessLevel(),
-            feed.getCreatedAt(), Objects.equals(feed.getAuthor().getId(), user.getId()));
+            feed.getCreatedAt(), Objects.equals(feed.getAuthor().getId(), user.getId()),
+            likeContext.countOf(feed.getId()), likeContext.isLiked(feed.getId()));
     }
 
     private List<FeedResponse> convertFeedResponseListNoViewer(List<Feed> feeds) {
+        List<Feed> activeFeeds = filterActiveFeeds(feeds);
+        FeedLikeContext likeContext = getFeedLikeContext(activeFeeds, null);
         List<FeedResponse> feedResponses = new ArrayList<>();
-        for (Feed feed : feeds) {
-            if (feed.getDeletedAt() == null) {
-                feedResponses.add(convertFeedResponseNoViewer(feed));
-            }
+        for (Feed feed : activeFeeds) {
+            feedResponses.add(convertFeedResponseNoViewer(feed, likeContext));
         }
         return feedResponses;
     }
 
-    private FeedResponse convertFeedResponseNoViewer(Feed feed) {
+    private FeedResponse convertFeedResponseNoViewer(Feed feed, FeedLikeContext likeContext) {
         return new FeedResponse(feed.getId(), feed.getAuthor().getNickname(), feed.getContent(),
-            feed.getRequiredAccessLevel(), feed.getCreatedAt(), false);
+            feed.getRequiredAccessLevel(), feed.getCreatedAt(), false,
+            likeContext.countOf(feed.getId()), false);
     }
 
     @Transactional
@@ -117,7 +138,7 @@ public class FeedService {
         feed.setAuthor(author);
 
         Feed savedFeed = feedRepository.save(feed);
-        return convertFeedResponse(savedFeed, author);
+        return convertFeedResponse(savedFeed, author, FeedLikeContext.empty());
     }
 
     @Transactional
@@ -138,7 +159,7 @@ public class FeedService {
             feed.setRequiredAccessLevel(request.requiredAccessLevel());
         }
 
-        return convertFeedResponse(feed, author);
+        return convertFeedResponse(feed, author, getFeedLikeContext(List.of(feed), author.getId()));
     }
 
     @Transactional
@@ -148,6 +169,24 @@ public class FeedService {
         validateOwner(feed, author);
 
         feed.setDeletedAt(LocalDateTime.now());
+    }
+
+    @Transactional
+    public void likeFeed(OAuth2User principal, Long feedId) {
+        User viewer = getAuthenticatedUser(principal);
+        Feed feed = getActiveFeed(feedId);
+        validateAccessible(feed, viewer);
+
+        feedLikeRepository.insertIgnore(viewer.getId(), feed.getId());
+    }
+
+    @Transactional
+    public void unlikeFeed(OAuth2User principal, Long feedId) {
+        User viewer = getAuthenticatedUser(principal);
+        Feed feed = getActiveFeed(feedId);
+        validateAccessible(feed, viewer);
+
+        feedLikeRepository.deleteByFeedIdAndUserId(feed.getId(), viewer.getId());
     }
 
     private User getAuthenticatedUser(OAuth2User principal) {
@@ -168,6 +207,55 @@ public class FeedService {
     private void validateOwner(Feed feed, User viewer) {
         if (!Objects.equals(feed.getAuthor().getId(), viewer.getId())) {
             throw new GeneralException(FeedExceptionType.FEED_FORBIDDEN);
+        }
+    }
+
+    private void validateAccessible(Feed feed, User viewer) {
+        if (!viewer.getContentAccessLevel().accessibleLevels()
+            .contains(feed.getRequiredAccessLevel())) {
+            throw new GeneralException(FeedExceptionType.FEED_FORBIDDEN);
+        }
+    }
+
+    private FeedLikeContext getFeedLikeContext(List<Feed> feeds, Long viewerId) {
+        if (feeds.isEmpty()) {
+            return FeedLikeContext.empty();
+        }
+
+        List<Long> feedIds = feeds.stream()
+            .map(Feed::getId)
+            .toList();
+
+        Map<Long, FeedLikeCount> countByFeedId = feedLikeRepository.countByFeedIds(feedIds)
+            .stream()
+            .collect(Collectors.toMap(FeedLikeCount::feedId, Function.identity()));
+
+        Set<Long> likedFeedIds = viewerId == null
+            ? Collections.emptySet()
+            : new HashSet<>(feedLikeRepository.findLikedFeedIds(viewerId, feedIds));
+
+        return new FeedLikeContext(countByFeedId, likedFeedIds);
+    }
+
+    private record FeedLikeContext(
+        Map<Long, FeedLikeCount> countByFeedId,
+        Set<Long> likedFeedIds
+    ) {
+
+        private static FeedLikeContext empty() {
+            return new FeedLikeContext(Collections.emptyMap(), Collections.emptySet());
+        }
+
+        private long countOf(Long feedId) {
+            FeedLikeCount count = countByFeedId.get(feedId);
+            if (count == null) {
+                return 0L;
+            }
+            return count.likeCount();
+        }
+
+        private boolean isLiked(Long feedId) {
+            return likedFeedIds.contains(feedId);
         }
     }
 

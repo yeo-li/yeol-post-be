@@ -124,6 +124,7 @@ public class SecurityConfig {
 
                 // authenticated feed write endpoint
                 .requestMatchers(HttpMethod.POST, "/api/v1/feeds").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/feeds/*/likes").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/feeds/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/feeds/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/images").authenticated()

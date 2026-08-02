@@ -1,0 +1,129 @@
+databaseChangeLog:
+  - changeSet:
+      id: 038-create-feed-like-table
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        not:
+          - tableExists:
+              tableName: feed_like
+      changes:
+        - createTable:
+            tableName: feed_like
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column: { name: created_at, type: DATETIME(6) }
+              - column: { name: updated_at, type: DATETIME(6) }
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: feed_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 039-add-uk-feed-like-user-feed
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed_like }
+          - columnExists:
+              tableName: feed_like
+              columnName: user_id
+          - columnExists:
+              tableName: feed_like
+              columnName: feed_id
+          - not:
+              - uniqueConstraintExists:
+                  tableName: feed_like
+                  constraintName: uk_feed_like_user_feed
+      changes:
+        - addUniqueConstraint:
+            tableName: feed_like
+            columnNames: user_id, feed_id
+            constraintName: uk_feed_like_user_feed
+
+  - changeSet:
+      id: 040-create-index-feed-like-feed-id
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed_like }
+          - columnExists:
+              tableName: feed_like
+              columnName: feed_id
+          - not:
+              - indexExists:
+                  tableName: feed_like
+                  indexName: idx_feed_like_feed_id
+      changes:
+        - createIndex:
+            tableName: feed_like
+            indexName: idx_feed_like_feed_id
+            columns:
+              - column: { name: feed_id }
+
+  - changeSet:
+      id: 041-add-fk-feed-like-user
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed_like }
+          - tableExists: { tableName: user }
+          - columnExists:
+              tableName: feed_like
+              columnName: user_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_feed_like_user
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: feed_like
+            baseColumnNames: user_id
+            referencedTableName: user
+            referencedColumnNames: id
+            constraintName: fk_feed_like_user
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+
+  - changeSet:
+      id: 042-add-fk-feed-like-feed
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists: { tableName: feed_like }
+          - tableExists: { tableName: feed }
+          - columnExists:
+              tableName: feed_like
+              columnName: feed_id
+          - not:
+              - foreignKeyConstraintExists:
+                  foreignKeyName: fk_feed_like_feed
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: feed_like
+            baseColumnNames: feed_id
+            referencedTableName: feed
+            referencedColumnNames: id
+            constraintName: fk_feed_like_feed
+            onDelete: CASCADE
+            onUpdate: RESTRICT

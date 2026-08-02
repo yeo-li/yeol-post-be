@@ -9,7 +9,9 @@ public record FeedResponse(
     String content,
     ContentAccessLevel requiredAccessLevel,
     LocalDateTime createdAt,
-    boolean isOwner
+    boolean isOwner,
+    long likeCount,
+    boolean isLiked
 ) {
 
 }
