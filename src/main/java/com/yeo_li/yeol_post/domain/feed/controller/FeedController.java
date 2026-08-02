@@ -62,4 +62,22 @@ public class FeedController {
         feedService.deleteFeed(principal, feedId);
         return ResponseEntity.ok(ApiResponse.onSuccess());
     }
+
+    @PostMapping("/{feedId}/likes")
+    public ResponseEntity<ApiResponse<Void>> likeFeed(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long feedId
+    ) {
+        feedService.likeFeed(principal, feedId);
+        return ResponseEntity.ok(ApiResponse.onSuccess());
+    }
+
+    @DeleteMapping("/{feedId}/likes")
+    public ResponseEntity<ApiResponse<Void>> unlikeFeed(
+        @AuthenticationPrincipal OAuth2User principal,
+        @PathVariable Long feedId
+    ) {
+        feedService.unlikeFeed(principal, feedId);
+        return ResponseEntity.ok(ApiResponse.onSuccess());
+    }
 }

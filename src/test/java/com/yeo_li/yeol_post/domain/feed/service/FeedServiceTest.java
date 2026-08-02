@@ -13,6 +13,8 @@ import com.yeo_li.yeol_post.domain.feed.dto.request.FeedUpdateRequest;
 import com.yeo_li.yeol_post.domain.feed.dto.response.FeedResponse;
 import com.yeo_li.yeol_post.domain.feed.entity.Feed;
 import com.yeo_li.yeol_post.domain.feed.exception.FeedExceptionType;
+import com.yeo_li.yeol_post.domain.feed.repository.FeedLikeCount;
+import com.yeo_li.yeol_post.domain.feed.repository.FeedLikeRepository;
 import com.yeo_li.yeol_post.domain.feed.repository.FeedRepository;
 import com.yeo_li.yeol_post.domain.user.domain.Role;
 import com.yeo_li.yeol_post.domain.user.domain.User;
@@ -42,6 +44,9 @@ class FeedServiceTest {
     private FeedRepository feedRepository;
 
     @Mock
+    private FeedLikeRepository feedLikeRepository;
+
+    @Mock
     private OAuth2User principal;
 
     @InjectMocks
@@ -69,8 +74,12 @@ class FeedServiceTest {
                 .extracting(FeedResponse::requiredAccessLevel)
                 .containsExactly(ContentAccessLevel.PUBLIC);
             assertThat(responses.get(0).isOwner()).isFalse();
+            assertThat(responses.get(0).likeCount()).isZero();
+            assertThat(responses.get(0).isLiked()).isFalse();
 
             verify(feedRepository).findAccessibleFeeds(accessLevels);
+            verify(feedLikeRepository).countByFeedIds(List.of(1L));
+            verify(feedLikeRepository, never()).findLikedFeedIds(any(), any());
             verifyNoInteractions(userRepository);
         }
 
@@ -149,6 +158,13 @@ class FeedServiceTest {
             when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
             when(feedRepository.findAccessibleFeeds(accessLevels))
                 .thenReturn(List.of(privateFeed, limitedFeed, publicFeed));
+            when(feedLikeRepository.countByFeedIds(List.of(3L, 2L, 1L)))
+                .thenReturn(List.of(
+                    new FeedLikeCount(2L, 4L),
+                    new FeedLikeCount(3L, 1L)
+                ));
+            when(feedLikeRepository.findLikedFeedIds(10L, List.of(3L, 2L, 1L)))
+                .thenReturn(List.of(3L));
 
             // when
             List<FeedResponse> responses = feedService.getFeeds(principal);
@@ -164,6 +180,12 @@ class FeedServiceTest {
                 );
             assertThat(responses)
                 .extracting(FeedResponse::isOwner)
+                .containsExactly(true, false, false);
+            assertThat(responses)
+                .extracting(FeedResponse::likeCount)
+                .containsExactly(1L, 4L, 0L);
+            assertThat(responses)
+                .extracting(FeedResponse::isLiked)
                 .containsExactly(true, false, false);
 
             verify(feedRepository).findAccessibleFeeds(accessLevels);
@@ -242,6 +264,8 @@ class FeedServiceTest {
             assertThat(response.content()).isEqualTo("오늘의 기록");
             assertThat(response.requiredAccessLevel()).isEqualTo(ContentAccessLevel.LIMITED);
             assertThat(response.isOwner()).isTrue();
+            assertThat(response.likeCount()).isZero();
+            assertThat(response.isLiked()).isFalse();
         }
 
         @Test
@@ -356,6 +380,9 @@ class FeedServiceTest {
             when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
             when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
             when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+            when(feedLikeRepository.countByFeedIds(List.of(100L)))
+                .thenReturn(List.of(new FeedLikeCount(100L, 2L)));
+            when(feedLikeRepository.findLikedFeedIds(10L, List.of(100L))).thenReturn(List.of(100L));
 
             // when
             FeedResponse response = feedService.updateFeed(principal, 100L, request);
@@ -368,6 +395,8 @@ class FeedServiceTest {
             assertThat(response.content()).isEqualTo("수정된 피드");
             assertThat(response.requiredAccessLevel()).isEqualTo(ContentAccessLevel.LIMITED);
             assertThat(response.isOwner()).isTrue();
+            assertThat(response.likeCount()).isEqualTo(2L);
+            assertThat(response.isLiked()).isTrue();
         }
 
         @Test
@@ -480,6 +509,97 @@ class FeedServiceTest {
     }
 
     @Nested
+    class LikeFeedTest {
+
+        @Test
+        void likeFeed_접근가능한_피드면_좋아요를_저장한다() {
+            // given
+            User viewer = createUser(10L, ContentAccessLevel.PRIVATE);
+            User author = createUser(20L, ContentAccessLevel.PUBLIC);
+            Feed feed = createFeed(100L, "좋아요 피드", ContentAccessLevel.LIMITED, author);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
+            when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+
+            // when
+            feedService.likeFeed(principal, 100L);
+
+            // then
+            verify(feedLikeRepository).insertIgnore(10L, 100L);
+        }
+
+        @Test
+        void likeFeed_비로그인이면_인증실패_예외를_발생시킨다() {
+            // when & then
+            assertThatThrownBy(() -> feedService.likeFeed(null, 100L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(FeedExceptionType.FEED_USER_ID_INVALID));
+            verify(feedRepository, never()).findByIdAndDeletedAtIsNull(100L);
+            verify(feedLikeRepository, never()).insertIgnore(any(), any());
+        }
+
+        @Test
+        void likeFeed_피드가_존재하지않으면_피드없음_예외를_발생시킨다() {
+            // given
+            User viewer = createUser(10L, ContentAccessLevel.PUBLIC);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
+            when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> feedService.likeFeed(principal, 100L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(FeedExceptionType.FEED_NOT_FOUND));
+            verify(feedLikeRepository, never()).insertIgnore(any(), any());
+        }
+
+        @Test
+        void likeFeed_접근권한이_없으면_권한없음_예외를_발생시킨다() {
+            // given
+            User viewer = createUser(10L, ContentAccessLevel.PUBLIC);
+            User author = createUser(20L, ContentAccessLevel.PUBLIC);
+            Feed feed = createFeed(100L, "PRIVATE 피드", ContentAccessLevel.PRIVATE, author);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
+            when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+
+            // when & then
+            assertThatThrownBy(() -> feedService.likeFeed(principal, 100L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(FeedExceptionType.FEED_FORBIDDEN));
+            verify(feedLikeRepository, never()).insertIgnore(any(), any());
+        }
+    }
+
+    @Nested
+    class UnlikeFeedTest {
+
+        @Test
+        void unlikeFeed_접근가능한_피드면_좋아요를_삭제한다() {
+            // given
+            User viewer = createUser(10L, ContentAccessLevel.LIMITED);
+            User author = createUser(20L, ContentAccessLevel.PUBLIC);
+            Feed feed = createFeed(100L, "좋아요 취소 피드", ContentAccessLevel.LIMITED, author);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
+            when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+
+            // when
+            feedService.unlikeFeed(principal, 100L);
+
+            // then
+            verify(feedLikeRepository).deleteByFeedIdAndUserId(100L, 10L);
+        }
+    }
+
+    @Nested
     class DeleteFeedTest {
 
         @Test
@@ -573,4 +693,5 @@ class FeedServiceTest {
         feed.setAuthor(author);
         return feed;
     }
+
 }
