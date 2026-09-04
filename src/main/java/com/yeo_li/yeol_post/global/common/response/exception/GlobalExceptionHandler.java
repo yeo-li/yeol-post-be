@@ -172,18 +172,6 @@ public class GlobalExceptionHandler {
         HttpStatus status = reason.getHttpStatus();
         int statusCode = status == null ? HttpStatus.INTERNAL_SERVER_ERROR.value() : status.value();
 
-        String logMessage = StructuredLog.event(
-                statusCode >= 500 ? "API_EXPECTED_EXCEPTION_FAILED" : "API_EXPECTED_EXCEPTION",
-                reason.getMessage(),
-                reason.getCode()
-            )
-            .field("method", request.getMethod())
-            .field("path", request.getRequestURI())
-            .field("status", statusCode)
-            .field("errorCode", reason.getCode())
-            .field("exceptionType", exception.getClass().getName())
-            .build();
-
         if (statusCode >= 500) {
             log.error(StructuredLog.event(
                     "API_EXPECTED_EXCEPTION_FAILED",
@@ -199,6 +187,16 @@ public class GlobalExceptionHandler {
             return;
         }
 
-        log.warn(logMessage);
+        log.warn(StructuredLog.event(
+                "API_EXPECTED_EXCEPTION",
+                reason.getMessage(),
+                reason.getCode()
+            )
+            .field("method", request.getMethod())
+            .field("path", request.getRequestURI())
+            .field("status", statusCode)
+            .field("errorCode", reason.getCode())
+            .field("exceptionType", exception.getClass().getName())
+            .build());
     }
 }

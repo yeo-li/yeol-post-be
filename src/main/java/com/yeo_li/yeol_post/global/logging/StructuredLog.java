@@ -51,6 +51,11 @@ public final class StructuredLog {
 
             fields.put("exceptionType", throwable.getClass().getName());
             fields.put("exceptionMessage", throwable.getMessage());
+            Throwable rootCause = rootCauseOf(throwable);
+            if (rootCause != throwable) {
+                fields.put("rootExceptionType", rootCause.getClass().getName());
+                fields.put("rootExceptionMessage", rootCause.getMessage());
+            }
             fields.put("stackTrace", stackTraceOf(throwable));
             return this;
         }
@@ -69,6 +74,14 @@ public final class StructuredLog {
             StringWriter stringWriter = new StringWriter();
             throwable.printStackTrace(new PrintWriter(stringWriter));
             return stringWriter.toString();
+        }
+
+        private Throwable rootCauseOf(Throwable throwable) {
+            Throwable current = throwable;
+            while (current.getCause() != null && current.getCause() != current) {
+                current = current.getCause();
+            }
+            return current;
         }
     }
 }
