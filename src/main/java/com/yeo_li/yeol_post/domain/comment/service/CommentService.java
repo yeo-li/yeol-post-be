@@ -18,11 +18,13 @@ import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
 import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.context.ApplicationEventPublisher;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CommentService {
 
@@ -67,6 +70,17 @@ public class CommentService {
             savedComment.getUser().getNickname(), savedComment.getContent(), post.getId(),
             post.getUser().getId(), post.getUser().getEmail(), post.getTitle(), LocalDateTime.now()));
 
+        log.info(StructuredLog.event(
+                "COMMENT_CREATED",
+                "댓글이 생성되었습니다.",
+                "CREATED"
+            )
+            .field("commentId", savedComment.getId())
+            .field("postId", post.getId())
+            .field("userId", user.getId())
+            .field("postOwnerUserId", post.getUser().getId())
+            .build());
+
         return convertCommentResponse(userId, savedComment);
     }
 
@@ -85,6 +99,16 @@ public class CommentService {
         }
 
         comment.setDeletedAt(LocalDateTime.now());
+
+        log.info(StructuredLog.event(
+                "COMMENT_DELETED",
+                "댓글이 삭제 상태로 전환되었습니다.",
+                "DELETED"
+            )
+            .field("commentId", comment.getId())
+            .field("postId", comment.getPost() == null ? null : comment.getPost().getId())
+            .field("userId", userId)
+            .build());
     }
 
     @Transactional
@@ -102,6 +126,16 @@ public class CommentService {
         }
 
         comment.setContent(sanitizeCommentContent(request.content()));
+
+        log.info(StructuredLog.event(
+                "COMMENT_UPDATED",
+                "댓글 내용이 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("commentId", comment.getId())
+            .field("postId", comment.getPost() == null ? null : comment.getPost().getId())
+            .field("userId", userId)
+            .build());
     }
 
     @Transactional
@@ -129,6 +163,18 @@ public class CommentService {
                 reply.getContent(), parentComment.getId(), parentComment.getUser().getId(),
                 parentComment.getUser().getEmail(), parentComment.getPost().getId(), parentComment.getPost().getTitle(),
                 LocalDateTime.now()));
+
+        log.info(StructuredLog.event(
+                "COMMENT_REPLY_CREATED",
+                "댓글 답글이 생성되었습니다.",
+                "CREATED"
+            )
+            .field("replyId", reply.getId())
+            .field("parentCommentId", parentComment.getId())
+            .field("postId", parentComment.getPost().getId())
+            .field("userId", user.getId())
+            .field("parentCommentOwnerUserId", parentComment.getUser().getId())
+            .build());
 
         return convertCommentReplyResponse(userId, reply);
     }
@@ -162,6 +208,17 @@ public class CommentService {
             user.getNickname(),
             LocalDateTime.now()
         ));
+
+        log.info(StructuredLog.event(
+                "COMMENT_LIKED",
+                "댓글 좋아요가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("commentId", comment.getId())
+            .field("postId", comment.getPost().getId())
+            .field("userId", user.getId())
+            .field("commentOwnerUserId", comment.getUser().getId())
+            .build());
     }
 
     @Transactional
@@ -174,7 +231,7 @@ public class CommentService {
         userRepository.findById(userId)
             .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_USER_NOT_FOUND));
 
-        commentRepository.findByIdAndDeletedAtIsNull(commentId)
+        Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
             .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
 
         if (!commentLikeRepository.existsByCommentIdAndUserId(commentId, userId)) {
@@ -182,6 +239,17 @@ public class CommentService {
         }
 
         commentLikeRepository.deleteByCommentIdAndUserId(commentId, userId);
+
+        log.info(StructuredLog.event(
+                "COMMENT_UNLIKED",
+                "댓글 좋아요 취소가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("commentId", commentId)
+            .field("postId", comment.getPost() == null ? null : comment.getPost().getId())
+            .field("userId", userId)
+            .field("commentOwnerUserId", comment.getUser() == null ? null : comment.getUser().getId())
+            .build());
     }
 
     public CommentListResponse getComments(OAuth2User principal, Long postId) {

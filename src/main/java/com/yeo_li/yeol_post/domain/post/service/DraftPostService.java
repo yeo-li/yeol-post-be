@@ -15,13 +15,16 @@ import com.yeo_li.yeol_post.domain.subscription.service.NewsLetterService;
 import com.yeo_li.yeol_post.domain.subscription.service.SubscriptionService;
 import com.yeo_li.yeol_post.domain.tag.Tag;
 import com.yeo_li.yeol_post.domain.tag.TagService;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DraftPostService {
@@ -41,7 +44,19 @@ public class DraftPostService {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
 
         Post post = postRepository.save(command.toEntity());
+
         postTagService.createPostTag(post, tags);
+
+        log.info(StructuredLog.event(
+                "DRAFT_POST_CREATED",
+                "임시 게시물이 생성되었습니다.",
+                "CREATED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .field("tagCount", tags.size())
+            .build());
 
         return post.getId();
     }
@@ -70,16 +85,29 @@ public class DraftPostService {
         List<Tag> tags = tagService.findOrCreateAll(request.tags());
 
         List<PostTag> postTags = postTagService.findPostTagByPostId(postId);
+
         for (PostTag postTag : postTags) {
             postTagService.deletePostTag(postTag.getId());
         }
 
         postTagService.createPostTag(post, tags);
+
+        log.info(StructuredLog.event(
+                "DRAFT_POST_UPDATED",
+                "임시 게시물이 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .field("tagCount", tags.size())
+            .build());
     }
 
     @Transactional
     public void publishPost(Long postId) {
         Post post = postRepository.findPostById(postId);
+
         post.setIsPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
@@ -87,5 +115,16 @@ public class DraftPostService {
             new PostPublishedEvent(post.getId(), post.getTitle(), post.getSummary(),
                 post.getPublishedAt())
         );
+
+        log.info(StructuredLog.event(
+                "DRAFT_POST_PUBLISHED",
+                "임시 게시물이 발행 상태로 전환되었습니다.",
+                "PUBLISHED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .field("isPublished", post.getIsPublished())
+            .build());
     }
 }

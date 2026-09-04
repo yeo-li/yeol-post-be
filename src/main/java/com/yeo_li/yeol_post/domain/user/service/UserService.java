@@ -13,15 +13,18 @@ import com.yeo_li.yeol_post.domain.user.exception.UserExceptionType;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -56,6 +59,7 @@ public class UserService {
         }
 
         UserUpdateRequest normalizedRequest = normalizeUserUpdateRequest(request);
+
         validateUserUpdateRequest(user, normalizedRequest);
 
         if (user.getOnboardingCompletedAt() == null) {
@@ -129,6 +133,17 @@ public class UserService {
                 newsLetterService.sendUnsubscribedNotification(subscription);
             }
         }
+
+        log.info(StructuredLog.event(
+                "USER_UPDATED",
+                "사용자 정보가 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("userId", user.getId())
+            .field("nicknameChanged", normalizedRequest.nickname() != null)
+            .field("emailChanged", isEmailChanged)
+            .field("emailOptInChanged", normalizedRequest.emailOptIn() != null)
+            .build());
     }
 
     @Transactional
@@ -163,6 +178,15 @@ public class UserService {
         user.setNickname(normalizedRequest.nickname());
         user.setEmail(normalizedRequest.email());
         user.setOnboardingCompletedAt(LocalDateTime.now());
+
+        log.info(StructuredLog.event(
+                "USER_ONBOARDING_COMPLETED",
+                "사용자 온보딩이 완료되었습니다.",
+                "COMPLETED"
+            )
+            .field("userId", user.getId())
+            .field("emailOptIn", normalizedRequest.emailOptIn())
+            .build());
     }
 
     private String getKakaoId(OAuth2User principal) {
@@ -226,6 +250,7 @@ public class UserService {
         }
 
         Subscription subscription = subscriptionService.getSubscriptionByEmail(user.getEmail());
+
         if (subscription != null) {
             subscription.setUser(null);
             if (subscription.getSubscriptionStatus() == SubscriptionStatus.SUBSCRIBE) {
@@ -235,12 +260,21 @@ public class UserService {
         }
 
         kakaoUnlinkService.unlink(kakaoAccessToken);
+
         user.setRole(Role.USER);
         user.setName("알수없음");
         user.setNickname(null);
         user.setEmail(null);
         user.setOnboardingCompletedAt(null);
         user.setDeletedAt(LocalDateTime.now());
+
+        log.info(StructuredLog.event(
+                "USER_DELETED",
+                "사용자가 탈퇴 상태로 전환되었습니다.",
+                "DELETED"
+            )
+            .field("userId", user.getId())
+            .build());
     }
 
     public UserStatusResponse getUserStatus(OAuth2User principal) {

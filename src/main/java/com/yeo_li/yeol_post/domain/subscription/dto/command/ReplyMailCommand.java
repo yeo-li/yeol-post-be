@@ -6,6 +6,8 @@ public record ReplyMailCommand(
     String receiverEmail,
     Long replyId,
     Long postId,
+    Long replyAuthorUserId,
+    Long parentCommentAuthorUserId,
     String postTitle,
     String replyAuthorNickname,
     String replyContent
@@ -16,6 +18,8 @@ public record ReplyMailCommand(
             event.parentCommentAuthorEmail(),
             event.replyId(),
             event.postId(),
+            event.replyAuthorUserId(),
+            event.parentCommentAuthorUserId(),
             event.postTitle(),
             event.replyAuthorNickname(),
             event.replyContent()

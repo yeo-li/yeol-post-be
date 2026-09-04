@@ -12,6 +12,7 @@ import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.entity.ContentAccessLevel;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class FeedService {
 
@@ -138,13 +141,25 @@ public class FeedService {
         feed.setAuthor(author);
 
         Feed savedFeed = feedRepository.save(feed);
+        log.info(StructuredLog.event(
+                "FEED_CREATED",
+                "피드가 생성되었습니다.",
+                "CREATED"
+            )
+            .field("feedId", savedFeed.getId())
+            .field("userId", author.getId())
+            .field("requiredAccessLevel", savedFeed.getRequiredAccessLevel())
+            .build());
+
         return convertFeedResponse(savedFeed, author, FeedLikeContext.empty());
     }
 
     @Transactional
     public FeedResponse updateFeed(OAuth2User principal, Long feedId, FeedUpdateRequest request) {
         User author = getAuthenticatedUser(principal);
+
         Feed feed = getActiveFeed(feedId);
+
         validateOwner(feed, author);
 
         if (request == null || (request.content() == null && request.requiredAccessLevel() == null)) {
@@ -159,34 +174,85 @@ public class FeedService {
             feed.setRequiredAccessLevel(request.requiredAccessLevel());
         }
 
+        log.info(StructuredLog.event(
+                "FEED_UPDATED",
+                "피드 정보가 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("feedId", feed.getId())
+            .field("userId", author.getId())
+            .field("requiredAccessLevel", feed.getRequiredAccessLevel())
+            .build());
+
         return convertFeedResponse(feed, author, getFeedLikeContext(List.of(feed), author.getId()));
     }
 
     @Transactional
     public void deleteFeed(OAuth2User principal, Long feedId) {
         User author = getAuthenticatedUser(principal);
+
         Feed feed = getActiveFeed(feedId);
+
         validateOwner(feed, author);
 
         feed.setDeletedAt(LocalDateTime.now());
+
+        log.info(StructuredLog.event(
+                "FEED_DELETED",
+                "피드가 삭제 상태로 전환되었습니다.",
+                "DELETED"
+            )
+            .field("feedId", feed.getId())
+            .field("userId", author.getId())
+            .build());
     }
 
     @Transactional
     public void likeFeed(OAuth2User principal, Long feedId) {
         User viewer = getAuthenticatedUser(principal);
+
         Feed feed = getActiveFeed(feedId);
+
         validateAccessible(feed, viewer);
 
-        feedLikeRepository.insertIgnore(viewer.getId(), feed.getId());
+        int inserted = feedLikeRepository.insertIgnore(viewer.getId(), feed.getId());
+        if (inserted == 0) {
+            return;
+        }
+
+        log.info(StructuredLog.event(
+                "FEED_LIKED",
+                "피드 좋아요가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("feedId", feed.getId())
+            .field("userId", viewer.getId())
+            .field("feedOwnerUserId", feed.getAuthor().getId())
+            .build());
     }
 
     @Transactional
     public void unlikeFeed(OAuth2User principal, Long feedId) {
         User viewer = getAuthenticatedUser(principal);
+
         Feed feed = getActiveFeed(feedId);
+
         validateAccessible(feed, viewer);
 
+        if (!feedLikeRepository.existsByFeedIdAndUserId(feed.getId(), viewer.getId())) {
+            return;
+        }
+
         feedLikeRepository.deleteByFeedIdAndUserId(feed.getId(), viewer.getId());
+
+        log.info(StructuredLog.event(
+                "FEED_UNLIKED",
+                "피드 좋아요 취소가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("feedId", feed.getId())
+            .field("userId", viewer.getId())
+            .build());
     }
 
     private User getAuthenticatedUser(OAuth2User principal) {

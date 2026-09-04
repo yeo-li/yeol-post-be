@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.global.config;
 
 import com.yeo_li.yeol_post.domain.user.service.UserOAuth2UserService;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -93,6 +95,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(EndpointRequest.to("health", "info", "prometheus")).permitAll()
                 .requestMatchers("/", "/home", "/signup", "/login/**", "/oauth2/**", "/logout",
                     "/error")
                 .permitAll() // public page
@@ -200,24 +203,26 @@ public class SecurityConfig {
         boolean matchExpected = StringUtils.hasText(headerToken) && headerToken.equals(expected);
         boolean matchCookie = StringUtils.hasText(headerToken) && headerToken.equals(xsrfCookie);
 
-        log.warn(
-            "CSRF denied instance={}, method={}, uri={}, origin={}, referer={}, xsrfHeader={}, xsrfHeaderLower={}, csrfHeader={}, expected={}, xsrfCookie={}, xsrfCookieCount={}, jsession={}, matchExpected={}, matchCookie={}. reason={}",
-            instanceId,
-            request.getMethod(),
-            request.getRequestURI(),
-            request.getHeader("Origin"),
-            request.getHeader("Referer"),
-            maskToken(headerToken),
-            maskToken(lowerHeaderToken),
-            maskToken(altHeaderToken),
-            maskToken(expected),
-            maskToken(xsrfCookie),
-            xsrfCookieCount,
-            maskToken(sessionCookie),
-            matchExpected,
-            matchCookie,
-            exception.getMessage()
-        );
+        log.warn(StructuredLog.event(
+                "CSRF_DENIED",
+                "CSRF 검증 실패로 요청이 거부되었습니다.",
+                "CSRF_TOKEN_INVALID"
+            )
+            .field("instance", instanceId)
+            .field("method", request.getMethod())
+            .field("path", request.getRequestURI())
+            .field("origin", request.getHeader("Origin"))
+            .field("xsrfHeader", maskToken(headerToken))
+            .field("xsrfHeaderLower", maskToken(lowerHeaderToken))
+            .field("csrfHeader", maskToken(altHeaderToken))
+            .field("expected", maskToken(expected))
+            .field("xsrfCookie", maskToken(xsrfCookie))
+            .field("xsrfCookieCount", xsrfCookieCount)
+            .field("jsession", maskToken(sessionCookie))
+            .field("matchExpected", matchExpected)
+            .field("matchCookie", matchCookie)
+            .field("errorMessage", exception.getMessage())
+            .build());
     }
 
     private Optional<String> resolveCsrfCookieDomain() {

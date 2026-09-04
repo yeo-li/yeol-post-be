@@ -6,6 +6,8 @@ public record CommentLikeMailCommand(
     String receiverEmail,
     Long commentId,
     Long postId,
+    Long commentAuthorUserId,
+    Long likerUserId,
     String postTitle,
     String likerNickname,
     String commentContent
@@ -16,6 +18,8 @@ public record CommentLikeMailCommand(
             event.commentAuthorEmail(),
             event.commentId(),
             event.postId(),
+            event.commentAuthorUserId(),
+            event.likerUserId(),
             event.postTitle(),
             event.likerNickname(),
             event.commentContent()
