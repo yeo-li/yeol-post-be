@@ -11,15 +11,18 @@ import com.yeo_li.yeol_post.domain.user.domain.User;
 import com.yeo_li.yeol_post.domain.user.repository.UserRepository;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class LikeService {
 
@@ -84,6 +87,16 @@ public class LikeService {
             user.getNickname(),
             LocalDateTime.now()
         ));
+
+        log.info(StructuredLog.event(
+                "POST_LIKED",
+                "게시물 좋아요가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("postId", post.getId())
+            .field("userId", user.getId())
+            .field("postOwnerUserId", post.getUser().getId())
+            .build());
     }
 
     @Transactional
@@ -100,6 +113,15 @@ public class LikeService {
             return;
         }
         likeRepository.deleteLikeByPostIdAndUserId(postId, user.getId());
+
+        log.info(StructuredLog.event(
+                "POST_UNLIKED",
+                "게시물 좋아요 취소가 반영되었습니다.",
+                "APPLIED"
+            )
+            .field("postId", postId)
+            .field("userId", user.getId())
+            .build());
     }
 
     private String getKakaoId(OAuth2User principal) {

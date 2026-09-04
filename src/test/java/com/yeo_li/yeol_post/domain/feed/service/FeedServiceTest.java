@@ -590,12 +590,32 @@ class FeedServiceTest {
             when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
             when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
             when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+            when(feedLikeRepository.existsByFeedIdAndUserId(100L, 10L)).thenReturn(true);
 
             // when
             feedService.unlikeFeed(principal, 100L);
 
             // then
             verify(feedLikeRepository).deleteByFeedIdAndUserId(100L, 10L);
+        }
+
+        @Test
+        void unlikeFeed_이미_좋아요가_없으면_삭제하지_않는다() {
+            // given
+            User viewer = createUser(10L, ContentAccessLevel.LIMITED);
+            User author = createUser(20L, ContentAccessLevel.PUBLIC);
+            Feed feed = createFeed(100L, "좋아요 취소 피드", ContentAccessLevel.LIMITED, author);
+
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 10L));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(viewer));
+            when(feedRepository.findByIdAndDeletedAtIsNull(100L)).thenReturn(Optional.of(feed));
+            when(feedLikeRepository.existsByFeedIdAndUserId(100L, 10L)).thenReturn(false);
+
+            // when
+            feedService.unlikeFeed(principal, 100L);
+
+            // then
+            verify(feedLikeRepository, never()).deleteByFeedIdAndUserId(any(), any());
         }
     }
 

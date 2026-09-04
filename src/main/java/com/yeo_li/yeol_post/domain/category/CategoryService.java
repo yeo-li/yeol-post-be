@@ -10,13 +10,16 @@ import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.dto.response.PostResponse;
 import com.yeo_li.yeol_post.domain.post.facade.PostRepositoryFacade;
 import com.yeo_li.yeol_post.domain.post_tag.PostTag;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CategoryService {
 
@@ -54,7 +57,15 @@ public class CategoryService {
 
 
     public void saveCategory(CategoryCreateCommand command) {
-        categoryRepository.save(command.toEntity());
+        Category category = categoryRepository.save(command.toEntity());
+
+        log.info(StructuredLog.event(
+                "CATEGORY_CREATED",
+                "카테고리가 생성되었습니다.",
+                "CREATED"
+            )
+            .field("categoryId", category.getId())
+            .build());
     }
 
     @Transactional
@@ -70,6 +81,14 @@ public class CategoryService {
         }
 
         categoryRepository.deleteCategoryById(categoryId);
+
+        log.info(StructuredLog.event(
+                "CATEGORY_DELETED",
+                "카테고리가 삭제되었습니다.",
+                "DELETED"
+            )
+            .field("categoryId", categoryId)
+            .build());
     }
 
     @Transactional
@@ -90,6 +109,13 @@ public class CategoryService {
             category.setCategoryDescription(request.categoryDescription());
         }
 
+        log.info(StructuredLog.event(
+                "CATEGORY_UPDATED",
+                "카테고리 정보가 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("categoryId", category.getId())
+            .build());
     }
 
     public List<CategoryRecentResponse> getAllCategoryRecentPost() {

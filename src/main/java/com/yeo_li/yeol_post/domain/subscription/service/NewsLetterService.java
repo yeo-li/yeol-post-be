@@ -7,6 +7,7 @@ import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentLikeMailComma
 import com.yeo_li.yeol_post.domain.subscription.dto.command.CommentMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.PostLikeMailCommand;
 import com.yeo_li.yeol_post.domain.subscription.dto.command.ReplyMailCommand;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,15 @@ public class NewsLetterService {
             try {
                 sendPublishedPostMail(subscription, command);
             } catch (IOException | IllegalStateException e) {
-                log.error("{}발송 실패", subscription.getEmail(), e);
+                log.error(StructuredLog.event(
+                        "PUBLISHED_POST_MAIL_FAILED",
+                        "게시물 발행 메일 발송에 실패했습니다.",
+                        "MAIL_SEND_FAILED"
+                    )
+                    .field("subscriptionId", subscription.getId())
+                    .field("postId", command.postId())
+                    .throwable(e)
+                    .build());
             }
         }
     }
@@ -52,6 +61,15 @@ public class NewsLetterService {
             "[yeolpost] 새 글이 올라왔어요!",
             html
         );
+
+        log.info(StructuredLog.event(
+                "PUBLISHED_POST_MAIL_SENT",
+                "게시물 발행 메일이 발송되었습니다.",
+                "SENT"
+            )
+            .field("subscriptionId", subscription.getId())
+            .field("postId", command.postId())
+            .build());
     }
 
     public void sendAnnouncements(List<Subscription> subscriptions,
@@ -60,7 +78,14 @@ public class NewsLetterService {
             try {
                 sendAnnouncement(subscription, command);
             } catch (IOException | IllegalStateException e) {
-                log.error("{}발송 실패", subscription.getEmail(), e);
+                log.error(StructuredLog.event(
+                        "ANNOUNCEMENT_MAIL_FAILED",
+                        "공지 메일 발송에 실패했습니다.",
+                        "MAIL_SEND_FAILED"
+                    )
+                    .field("subscriptionId", subscription.getId())
+                    .throwable(e)
+                    .build());
             }
         }
     }
@@ -79,6 +104,14 @@ public class NewsLetterService {
             "[공지] " + command.title(),
             html
         );
+
+        log.info(StructuredLog.event(
+                "ANNOUNCEMENT_MAIL_SENT",
+                "공지 메일이 발송되었습니다.",
+                "SENT"
+            )
+            .field("subscriptionId", subscription.getId())
+            .build());
     }
 
     public void sendSubscribedNotification(Subscription subscription) {
@@ -94,8 +127,25 @@ public class NewsLetterService {
                 "[yeolpost] 구독이 완료되었습니다.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "SUBSCRIBED_NOTIFICATION_SENT",
+                    "구독 완료 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("subscriptionId", subscription.getId())
+                .field("userId", subscription.getUser() == null ? null : subscription.getUser().getId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{}발송 실패", subscription.getEmail(), e);
+            log.error(StructuredLog.event(
+                    "SUBSCRIBED_NOTIFICATION_FAILED",
+                    "구독 완료 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("subscriptionId", subscription.getId())
+                .field("userId", subscription.getUser() == null ? null : subscription.getUser().getId())
+                .throwable(e)
+                .build());
         }
     }
 
@@ -111,15 +161,39 @@ public class NewsLetterService {
                 "[yeolpost] 구독이 해지되었습니다.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "UNSUBSCRIBED_NOTIFICATION_SENT",
+                    "구독 해지 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("subscriptionId", subscription.getId())
+                .field("userId", subscription.getUser() == null ? null : subscription.getUser().getId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{}발송 실패", subscription.getEmail(), e);
+            log.error(StructuredLog.event(
+                    "UNSUBSCRIBED_NOTIFICATION_FAILED",
+                    "구독 해지 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("subscriptionId", subscription.getId())
+                .field("userId", subscription.getUser() == null ? null : subscription.getUser().getId())
+                .throwable(e)
+                .build());
         }
     }
 
     public void sendCommentNotification(CommentMailCommand command) {
         if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
-            log.warn("댓글 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}, commentId={}",
-                command.postId(), command.commentId());
+            log.warn(StructuredLog.event(
+                    "COMMENT_NOTIFICATION_SKIPPED",
+                    "댓글 알림 메일 수신자 이메일이 없어 발송하지 않습니다.",
+                    "RECEIVER_EMAIL_MISSING"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("commentAuthorUserId", command.commentAuthorUserId())
+                .build());
             return;
         }
 
@@ -138,15 +212,41 @@ public class NewsLetterService {
                 "[yeolpost] 새 댓글이 달렸어요.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "COMMENT_NOTIFICATION_SENT",
+                    "댓글 알림 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("commentAuthorUserId", command.commentAuthorUserId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{} 댓글 알림 메일 발송 실패", command.receiverEmail(), e);
+            log.error(StructuredLog.event(
+                    "COMMENT_NOTIFICATION_FAILED",
+                    "댓글 알림 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("commentAuthorUserId", command.commentAuthorUserId())
+                .throwable(e)
+                .build());
         }
     }
 
     public void sendReplyNotification(ReplyMailCommand command) {
         if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
-            log.warn("답글 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}, replyId={}",
-                command.postId(), command.replyId());
+            log.warn(StructuredLog.event(
+                    "REPLY_NOTIFICATION_SKIPPED",
+                    "답글 알림 메일 수신자 이메일이 없어 발송하지 않습니다.",
+                    "RECEIVER_EMAIL_MISSING"
+                )
+                .field("postId", command.postId())
+                .field("replyId", command.replyId())
+                .field("replyAuthorUserId", command.replyAuthorUserId())
+                .build());
             return;
         }
 
@@ -165,15 +265,40 @@ public class NewsLetterService {
                 "[yeolpost] 새 답글이 달렸어요.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "REPLY_NOTIFICATION_SENT",
+                    "답글 알림 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("postId", command.postId())
+                .field("replyId", command.replyId())
+                .field("replyAuthorUserId", command.replyAuthorUserId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{} 답글 알림 메일 발송 실패", command.receiverEmail(), e);
+            log.error(StructuredLog.event(
+                    "REPLY_NOTIFICATION_FAILED",
+                    "답글 알림 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("postId", command.postId())
+                .field("replyId", command.replyId())
+                .field("replyAuthorUserId", command.replyAuthorUserId())
+                .throwable(e)
+                .build());
         }
     }
 
     public void sendPostLikeNotification(PostLikeMailCommand command) {
         if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
-            log.warn("게시물 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}",
-                command.postId());
+            log.warn(StructuredLog.event(
+                    "POST_LIKE_NOTIFICATION_SKIPPED",
+                    "게시물 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다.",
+                    "RECEIVER_EMAIL_MISSING"
+                )
+                .field("postId", command.postId())
+                .field("likerUserId", command.likerUserId())
+                .build());
             return;
         }
 
@@ -190,15 +315,39 @@ public class NewsLetterService {
                 "[yeolpost] 새 좋아요가 눌렸어요.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "POST_LIKE_NOTIFICATION_SENT",
+                    "게시물 좋아요 알림 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("postId", command.postId())
+                .field("likerUserId", command.likerUserId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{} 게시물 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
+            log.error(StructuredLog.event(
+                    "POST_LIKE_NOTIFICATION_FAILED",
+                    "게시물 좋아요 알림 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("postId", command.postId())
+                .field("likerUserId", command.likerUserId())
+                .throwable(e)
+                .build());
         }
     }
 
     public void sendCommentLikeNotification(CommentLikeMailCommand command) {
         if (command.receiverEmail() == null || command.receiverEmail().isBlank()) {
-            log.warn("댓글 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다. postId={}, commentId={}",
-                command.postId(), command.commentId());
+            log.warn(StructuredLog.event(
+                    "COMMENT_LIKE_NOTIFICATION_SKIPPED",
+                    "댓글 좋아요 알림 메일 수신자 이메일이 없어 발송하지 않습니다.",
+                    "RECEIVER_EMAIL_MISSING"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("likerUserId", command.likerUserId())
+                .build());
             return;
         }
 
@@ -217,8 +366,27 @@ public class NewsLetterService {
                 "[yeolpost] 댓글에 새 좋아요가 눌렸어요.",
                 html
             );
+
+            log.info(StructuredLog.event(
+                    "COMMENT_LIKE_NOTIFICATION_SENT",
+                    "댓글 좋아요 알림 메일이 발송되었습니다.",
+                    "SENT"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("likerUserId", command.likerUserId())
+                .build());
         } catch (IOException | IllegalStateException e) {
-            log.error("{} 댓글 좋아요 알림 메일 발송 실패", command.receiverEmail(), e);
+            log.error(StructuredLog.event(
+                    "COMMENT_LIKE_NOTIFICATION_FAILED",
+                    "댓글 좋아요 알림 메일 발송에 실패했습니다.",
+                    "MAIL_SEND_FAILED"
+                )
+                .field("postId", command.postId())
+                .field("commentId", command.commentId())
+                .field("likerUserId", command.likerUserId())
+                .throwable(e)
+                .build());
         }
     }
 }

@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.image;
 
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -17,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import javax.imageio.ImageIO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -26,6 +28,7 @@ import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+@Slf4j
 @Service
 public class ImageService {
 
@@ -60,7 +63,9 @@ public class ImageService {
 
     public StoredImage store(MultipartFile file, boolean allowOversizedImage) {
         byte[] bytes = readAndValidateFileBytes(file, allowOversizedImage);
+
         ImageFormat imageFormat = validateImage(file, bytes);
+
         BufferedImage image = decodeImage(bytes);
 
         String filename = generateUniqueFilename(imageFormat.extension);
@@ -72,13 +77,25 @@ public class ImageService {
         try {
             reencodeImage(image, imageFormat, targetPath);
         } catch (IOException e) {
-            throw new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR);
+            throw new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR, e);
         }
 
         String url = ServletUriComponentsBuilder.fromCurrentContextPath()
             .path("/api/v1/images/")
             .path(filename)
             .toUriString();
+
+        log.info(StructuredLog.event(
+                "IMAGE_UPLOADED",
+                "이미지가 업로드되었습니다.",
+                "CREATED"
+            )
+            .field("filename", filename)
+            .field("contentType", imageFormat.mediaType.toString())
+            .field("fileSizeBytes", bytes.length)
+            .field("width", image.getWidth())
+            .field("height", image.getHeight())
+            .build());
 
         return new StoredImage(filename, url);
     }
