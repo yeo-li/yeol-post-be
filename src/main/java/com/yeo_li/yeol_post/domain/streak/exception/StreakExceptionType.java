@@ -17,11 +17,22 @@ public enum StreakExceptionType implements BaseCode {
 
     @Override
     public Reason getReason() {
-        return null;
+        return Reason.builder()
+            .message(message)
+            .code(code)
+            .isSuccess(false)
+            .data(null)
+            .build();
     }
 
     @Override
     public Reason getReasonHttpStatus() {
-        return null;
+        return Reason.builder()
+            .message(message)
+            .code(code)
+            .isSuccess(false)
+            .httpStatus(httpStatus)
+            .data(null)
+            .build();
     }
 }

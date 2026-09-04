@@ -116,6 +116,8 @@ class NewsLetterServiceTest {
                 "post-author@test.com",
                 101L,
                 10L,
+                42L,
+                7L,
                 "게시물 제목",
                 "댓글작성자",
                 "댓글 본문"
@@ -151,6 +153,8 @@ class NewsLetterServiceTest {
                 "post-author@test.com",
                 101L,
                 10L,
+                42L,
+                7L,
                 "게시물 제목",
                 "댓글작성자",
                 "댓글 본문"
@@ -176,6 +180,8 @@ class NewsLetterServiceTest {
                 "comment-author@test.com",
                 201L,
                 10L,
+                42L,
+                7L,
                 "게시물 제목",
                 "답글작성자",
                 "답글 본문"
@@ -214,6 +220,8 @@ class NewsLetterServiceTest {
             PostLikeMailCommand command = new PostLikeMailCommand(
                 "post-author@test.com",
                 10L,
+                7L,
+                42L,
                 "게시물 제목",
                 "좋아요작성자"
             );
@@ -249,6 +257,8 @@ class NewsLetterServiceTest {
                 "comment-author@test.com",
                 101L,
                 10L,
+                7L,
+                42L,
                 "게시물 제목",
                 "좋아요작성자",
                 "댓글 본문"

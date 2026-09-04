@@ -24,6 +24,8 @@ public interface FeedLikeRepository extends JpaRepository<FeedLike, Long> {
 
     void deleteByFeedIdAndUserId(Long feedId, Long userId);
 
+    boolean existsByFeedIdAndUserId(Long feedId, Long userId);
+
     @Query("""
         SELECT new com.yeo_li.yeol_post.domain.feed.repository.FeedLikeCount(
             fl.feed.id,

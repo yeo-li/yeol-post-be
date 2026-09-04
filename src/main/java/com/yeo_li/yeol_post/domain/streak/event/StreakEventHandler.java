@@ -2,6 +2,7 @@ package com.yeo_li.yeol_post.domain.streak.event;
 
 import com.yeo_li.yeol_post.domain.post.event.PostPublishedEvent;
 import com.yeo_li.yeol_post.domain.streak.service.StreakService;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,15 @@ public class StreakEventHandler {
         try {
             streakService.addStreakCount(event.publishedAt());
         } catch (Exception e) {
-            log.error("Streak 업데이트 실패", e);
+            log.error(StructuredLog.event(
+                    "STREAK_UPDATE_FAILED",
+                    "게시물 발행 후 스트릭 업데이트에 실패했습니다.",
+                    "UNEXPECTED_ERROR"
+                )
+                .field("postId", event.postId())
+                .field("publishedAt", event.publishedAt().toString())
+                .throwable(e)
+                .build());
         }
     }
 }

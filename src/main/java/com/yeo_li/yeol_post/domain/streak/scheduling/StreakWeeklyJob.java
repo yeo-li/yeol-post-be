@@ -1,6 +1,7 @@
 package com.yeo_li.yeol_post.domain.streak.scheduling;
 
 import com.yeo_li.yeol_post.domain.streak.service.StreakService;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,6 @@ public class StreakWeeklyJob {
     //    @Scheduled(cron = "0 5 6 * * MON", zone = "Asia/Seoul")
     @Scheduled(cron = "0 5 6 * * MON", zone = "Asia/Seoul")
     public void runWeeklyTask() {
-        log.info("주간 작업 시작");
         try {
             // 저번주(가장 최근 StreakStatus) StreakStatus 갱신
             streakService.updateStreakStatus(LocalDateTime.now());
@@ -25,9 +25,13 @@ public class StreakWeeklyJob {
             // 이번주 스트릭 생성
             streakService.createWeeklyStreak(LocalDateTime.now());
         } catch (Exception e) {
-            log.error("주간 작업 실패", e);
-        } finally {
-            log.info("주간 작업 종료");
+            log.error(StructuredLog.event(
+                    "STREAK_WEEKLY_JOB_FAILED",
+                    "주간 스트릭 작업에 실패했습니다.",
+                    "UNEXPECTED_ERROR"
+                )
+                .throwable(e)
+                .build());
         }
     }
 }

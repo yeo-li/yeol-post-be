@@ -9,6 +9,7 @@ import com.yeo_li.yeol_post.domain.streak.facade.StreakStatusRepositoryFacade;
 import com.yeo_li.yeol_post.domain.streak.facade.WeeklyStreakRepositoryFacade;
 import com.yeo_li.yeol_post.domain.streak.repository.WeeklyStreakRepository;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -16,10 +17,12 @@ import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class StreakService {
 
@@ -46,6 +49,17 @@ public class StreakService {
 
         streak.addPostCount();
 
+        log.info(StructuredLog.event(
+                "WEEKLY_STREAK_POST_COUNT_INCREASED",
+                "주간 스트릭 게시물 수가 증가했습니다.",
+                "INCREMENTED"
+            )
+            .field("weeklyStreakId", streak.getId())
+            .field("year", streak.getYear())
+            .field("weekNumber", streak.getWeekNumber())
+            .field("postCount", streak.getPostCount())
+            .build());
+
         if (streak.getPostCount() == 1) {
             createStreakStatus(dateTime);
         }
@@ -65,6 +79,16 @@ public class StreakService {
             .build();
 
         weeklyStreakRepository.save(streak);
+
+        log.info(StructuredLog.event(
+                "WEEKLY_STREAK_CREATED",
+                "주간 스트릭이 생성되었습니다.",
+                "CREATED"
+            )
+            .field("weeklyStreakId", streak.getId())
+            .field("year", streak.getYear())
+            .field("weekNumber", streak.getWeekNumber())
+            .build());
     }
 
     @Transactional
@@ -76,6 +100,18 @@ public class StreakService {
             post.getPublishedAt());
 
         streak.removePostCount();
+
+        log.info(StructuredLog.event(
+                "WEEKLY_STREAK_POST_COUNT_DECREASED",
+                "주간 스트릭 게시물 수가 감소했습니다.",
+                "DECREMENTED"
+            )
+            .field("weeklyStreakId", streak.getId())
+            .field("year", streak.getYear())
+            .field("weekNumber", streak.getWeekNumber())
+            .field("postCount", streak.getPostCount())
+            .field("postId", post.getId())
+            .build());
 
         if (streak.getPostCount() <= 0) {
             removeStreakStatus();
@@ -108,6 +144,17 @@ public class StreakService {
             .build();
 
         streakStatusRepositoryFacade.save(streakStatus);
+
+        log.info(StructuredLog.event(
+                "STREAK_STATUS_CREATED",
+                "스트릭 상태가 생성되었습니다.",
+                "CREATED"
+            )
+            .field("year", streakStatus.getYear())
+            .field("weekNumber", streakStatus.getWeekNumber())
+            .field("currentStreakLength", streakStatus.getCurrentStreakLength())
+            .field("maxStreakLength", streakStatus.getMaxStreakLength())
+            .build());
     }
 
     @Transactional
@@ -122,11 +169,33 @@ public class StreakService {
             .build();
 
         streakStatusRepositoryFacade.save(streakStatus);
+
+        log.info(StructuredLog.event(
+                "STREAK_STATUS_INITIALIZED",
+                "스트릭 상태가 초기화되었습니다.",
+                "INITIALIZED"
+            )
+            .field("year", streakStatus.getYear())
+            .field("weekNumber", streakStatus.getWeekNumber())
+            .field("currentStreakLength", streakStatus.getCurrentStreakLength())
+            .field("maxStreakLength", streakStatus.getMaxStreakLength())
+            .build());
     }
 
     public void removeStreakStatus() {
         StreakStatus streakStatus = streakStatusRepositoryFacade.findLatest();
         streakStatusRepositoryFacade.delete(streakStatus);
+
+        log.info(StructuredLog.event(
+                "STREAK_STATUS_REMOVED",
+                "스트릭 상태가 삭제되었습니다.",
+                "DELETED"
+            )
+            .field("year", streakStatus.getYear())
+            .field("weekNumber", streakStatus.getWeekNumber())
+            .field("currentStreakLength", streakStatus.getCurrentStreakLength())
+            .field("maxStreakLength", streakStatus.getMaxStreakLength())
+            .build());
     }
 
     @Transactional

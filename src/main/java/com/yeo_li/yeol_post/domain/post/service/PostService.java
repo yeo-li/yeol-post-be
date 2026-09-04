@@ -19,13 +19,16 @@ import com.yeo_li.yeol_post.domain.tag.TagService;
 import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
 import com.yeo_li.yeol_post.global.common.response.exception.GeneralException;
 import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
+import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -43,13 +46,27 @@ public class PostService {
     @Transactional
     public void createPost(PostCreateCommand command) {
         List<Tag> tags = tagService.findOrCreateAll(command.tags());
+
         Post post = postRepository.save(command.toEntity());
+
         postTagService.createPostTag(post, tags);
 
         publisher.publishEvent(
             new PostPublishedEvent(post.getId(), post.getTitle(), post.getSummary(),
                 post.getPublishedAt())
         );
+
+        log.info(StructuredLog.event(
+                "POST_CREATED",
+                "게시물이 생성되어 발행 상태로 전환되었습니다.",
+                "CREATED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .field("isPublished", post.getIsPublished())
+            .field("tagCount", tags.size())
+            .build());
     }
 
     public List<PostResponse> getAllPosts() {
@@ -158,8 +175,20 @@ public class PostService {
         if (post == null) {
             throw new GeneralException(PostExceptionType.POST_NOT_FOUND);
         }
+
         postRepository.deleteById(postId);
+
         streakService.removeStreakCount(post);
+
+        log.info(StructuredLog.event(
+                "POST_DELETED",
+                "게시물이 삭제되었습니다.",
+                "DELETED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .build());
     }
 
     @Transactional
@@ -186,12 +215,23 @@ public class PostService {
         List<Tag> tags = tagService.findOrCreateAll(request.tags());
 
         List<PostTag> postTags = postTagService.findPostTagByPostId(postId);
+
         for (PostTag postTag : postTags) {
             postTagService.deletePostTag(postTag.getId());
         }
 
         postTagService.createPostTag(post, tags);
 
+        log.info(StructuredLog.event(
+                "POST_UPDATED",
+                "게시물 정보가 수정되었습니다.",
+                "UPDATED"
+            )
+            .field("postId", post.getId())
+            .field("userId", post.getUser().getId())
+            .field("categoryId", post.getCategory().getId())
+            .field("tagCount", tags.size())
+            .build());
     }
 
     public List<PostResponse> getAllDraftPosts() {
@@ -207,6 +247,15 @@ public class PostService {
         }
 
         post.increaseViewCount();
+
+        log.info(StructuredLog.event(
+                "POST_VIEW_COUNT_INCREASED",
+                "게시물 조회수가 증가했습니다.",
+                "INCREMENTED"
+            )
+            .field("postId", post.getId())
+            .field("viewCount", post.getViews())
+            .build());
     }
 
 }
