@@ -68,10 +68,36 @@ logging:
 ## Alloy example
 
 ```hcl
+logging {
+  level = "warn"
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+    }
+  }
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+    }
+  }
+}
+
 prometheus.scrape "yeol_post" {
   targets = [
     {
-      __address__ = "localhost:8081",
+      __address__ = "127.0.0.1:8081",
       app         = "yeol-post",
       env         = "prod",
     },
@@ -80,34 +106,58 @@ prometheus.scrape "yeol_post" {
   metrics_path    = "/actuator/prometheus"
   scrape_interval = "15s"
 
-  forward_to = [prometheus.remote_write.default.receiver]
+  forward_to = [prometheus.remote_write.grafana_cloud.receiver]
 }
 
-prometheus.remote_write "default" {
-  endpoint {
-    url = env("PROMETHEUS_REMOTE_WRITE_URL")
+loki.process "yeol_post" {
+  stage.json {
+    expressions = {
+      message              = "message",
+      event                = "event",
+      reason               = "reason",
+      requestId            = "requestId",
+      method               = "method",
+      path                 = "path",
+      status               = "status",
+      exceptionType        = "exceptionType",
+      rootExceptionType    = "rootExceptionType",
+      rootExceptionMessage = "rootExceptionMessage",
+    }
   }
+
+  stage.labels {
+    values = {
+      event  = "",
+      reason = "",
+    }
+  }
+
+  stage.structured_metadata {
+    values = {
+      requestId            = "",
+      method               = "",
+      path                 = "",
+      status               = "",
+      exceptionType        = "",
+      rootExceptionType    = "",
+      rootExceptionMessage = "",
+    }
+  }
+
+  forward_to = [loki.write.grafana_cloud.receiver]
 }
 
-local.file_match "yeol_post_logs" {
-  path_targets = [
+loki.source.file "yeol_post" {
+  targets = [
     {
       __path__ = "/var/log/yeol-post/application.log",
       app      = "yeol-post",
       env      = "prod",
     },
   ]
-}
 
-loki.source.file "yeol_post" {
-  targets    = local.file_match.yeol_post_logs.targets
-  forward_to = [loki.write.default.receiver]
-}
-
-loki.write "default" {
-  endpoint {
-    url = env("LOKI_WRITE_URL")
-  }
+  tail_from_end = true
+  forward_to    = [loki.process.yeol_post.receiver]
 }
 ```
 
