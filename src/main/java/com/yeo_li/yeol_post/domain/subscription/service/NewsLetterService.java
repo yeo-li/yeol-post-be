@@ -28,11 +28,23 @@ public class NewsLetterService {
     private String frontendOrigin;
 
     public void sendPublishedPostMails(List<Subscription> subscriptions, PostMailCommand command) {
+        log.info(StructuredLog.event(
+                "PUBLISHED_POST_MAIL_SEND_STARTED",
+                "게시물 발행 메일 발송 작업을 시작합니다.",
+                "STARTED"
+            )
+            .field("postId", command.postId())
+            .field("subscriptionCount", subscriptions.size())
+            .build());
 
+        int successCount = 0;
+        int failureCount = 0;
         for (Subscription subscription : subscriptions) {
             try {
                 sendPublishedPostMail(subscription, command);
+                successCount++;
             } catch (IOException | IllegalStateException e) {
+                failureCount++;
                 log.error(StructuredLog.event(
                         "PUBLISHED_POST_MAIL_FAILED",
                         "게시물 발행 메일 발송에 실패했습니다.",
@@ -43,6 +55,18 @@ public class NewsLetterService {
                     .throwable(e)
                     .build());
             }
+        }
+
+        if (failureCount == 0) {
+            log.info(StructuredLog.event(
+                    "PUBLISHED_POST_MAIL_SEND_SUCCEEDED",
+                    "게시물 발행 메일 발송 작업이 성공했습니다.",
+                    "SUCCEEDED"
+                )
+                .field("postId", command.postId())
+                .field("subscriptionCount", subscriptions.size())
+                .field("successCount", successCount)
+                .build());
         }
     }
 
@@ -61,23 +85,26 @@ public class NewsLetterService {
             "[yeolpost] 새 글이 올라왔어요!",
             html
         );
-
-        log.info(StructuredLog.event(
-                "PUBLISHED_POST_MAIL_SENT",
-                "게시물 발행 메일이 발송되었습니다.",
-                "SENT"
-            )
-            .field("subscriptionId", subscription.getId())
-            .field("postId", command.postId())
-            .build());
     }
 
     public void sendAnnouncements(List<Subscription> subscriptions,
         AnnouncementMailCommand command) {
+        log.info(StructuredLog.event(
+                "ANNOUNCEMENT_MAIL_SEND_STARTED",
+                "공지 메일 발송 작업을 시작합니다.",
+                "STARTED"
+            )
+            .field("subscriptionCount", subscriptions.size())
+            .build());
+
+        int successCount = 0;
+        int failureCount = 0;
         for (Subscription subscription : subscriptions) {
             try {
                 sendAnnouncement(subscription, command);
+                successCount++;
             } catch (IOException | IllegalStateException e) {
+                failureCount++;
                 log.error(StructuredLog.event(
                         "ANNOUNCEMENT_MAIL_FAILED",
                         "공지 메일 발송에 실패했습니다.",
@@ -87,6 +114,17 @@ public class NewsLetterService {
                     .throwable(e)
                     .build());
             }
+        }
+
+        if (failureCount == 0) {
+            log.info(StructuredLog.event(
+                    "ANNOUNCEMENT_MAIL_SEND_SUCCEEDED",
+                    "공지 메일 발송 작업이 성공했습니다.",
+                    "SUCCEEDED"
+                )
+                .field("subscriptionCount", subscriptions.size())
+                .field("successCount", successCount)
+                .build());
         }
     }
 
@@ -104,14 +142,6 @@ public class NewsLetterService {
             "[공지] " + command.title(),
             html
         );
-
-        log.info(StructuredLog.event(
-                "ANNOUNCEMENT_MAIL_SENT",
-                "공지 메일이 발송되었습니다.",
-                "SENT"
-            )
-            .field("subscriptionId", subscription.getId())
-            .build());
     }
 
     public void sendSubscribedNotification(Subscription subscription) {

@@ -57,14 +57,5 @@ public class VisitorStatsService {
 
         dailyVisit.setVisitCount(dailyVisit.getVisitCount() + 1);
         dailyVisitRepositoryFacade.saveAndFlush(dailyVisit);
-
-        log.info(StructuredLog.event(
-                "DAILY_VISIT_COUNT_INCREASED",
-                "일별 방문자 수가 증가했습니다.",
-                "INCREMENTED"
-            )
-            .field("visitDate", visitDate.toString())
-            .field("visitCount", dailyVisit.getVisitCount())
-            .build());
     }
 }
