@@ -1,11 +1,15 @@
 package com.yeo_li.yeol_post.domain.post.facade;
 
 import com.yeo_li.yeol_post.domain.category.Category;
-import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
-import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
+import com.yeo_li.yeol_post.domain.category.CategoryPostCount;
+import com.yeo_li.yeol_post.domain.category.CategoryRepository;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.post.repository.PostRepository;
+import com.yeo_li.yeol_post.global.common.response.code.resultCode.ErrorStatus;
+import com.yeo_li.yeol_post.global.common.response.handler.PostHandler;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class PostRepositoryFacade {
 
     private final PostRepository postRepository;
+    private final CategoryRepository categoryRepository;
 
     public boolean existsPostByCategoryId(Category category) {
         List<Post> posts = postRepository.findPostsByCategory(category);
@@ -33,6 +38,19 @@ public class PostRepositoryFacade {
             category);
 
         return posts.size();
+    }
+
+    public Map<Long, Integer> countPostsByCategory(List<Category> categories) {
+        if (categories == null || categories.isEmpty()) {
+            return Map.of();
+        }
+
+        return categoryRepository.countPublishedPostsByCategories(categories)
+            .stream()
+            .collect(Collectors.toMap(
+                CategoryPostCount::categoryId,
+                count -> Math.toIntExact(count.postCount())
+            ));
     }
 
     public List<Post> findPostsByCategory(Category category) {

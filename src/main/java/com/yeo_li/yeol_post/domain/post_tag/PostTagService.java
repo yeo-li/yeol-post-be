@@ -3,7 +3,9 @@ package com.yeo_li.yeol_post.domain.post_tag;
 import com.yeo_li.yeol_post.domain.post.domain.Post;
 import com.yeo_li.yeol_post.domain.tag.Tag;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +48,24 @@ public class PostTagService {
 
     public List<PostTag> findPostTagByPostId(Long postId) {
         return postTagRepository.findPostTagsByPost_Id(postId);
+    }
+
+    public Map<Long, List<String>> findTagNamesByPostIds(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<PostTagName> postTags = postTagRepository.findTagNamesByPostIds(postIds);
+
+        Map<Long, List<String>> tagNamesByPostId = new HashMap<>();
+
+        for (PostTagName postTag : postTags) {
+            tagNamesByPostId
+                .computeIfAbsent(postTag.postId(), key -> new ArrayList<>())
+                .add(postTag.tagName());
+        }
+
+        return tagNamesByPostId;
     }
 
     @Transactional
