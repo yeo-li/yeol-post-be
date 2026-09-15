@@ -23,6 +23,7 @@ import com.yeo_li.yeol_post.global.logging.StructuredLog;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -140,12 +141,18 @@ public class PostService {
 
     public List<PostResponse> convertPostResponse(List<Post> posts) {
         List<PostResponse> postResponses = new ArrayList<>();
+        List<Long> postIds = new ArrayList<>();
+        List<Category> categories = new ArrayList<>();
         for (Post post : posts) {
-            List<Tag> tags = postTagService.findTagByPostId(post.getId());
-            List<String> tagNames = new ArrayList<>();
-            for (Tag tag : tags) {
-                tagNames.add(tag.getTagName());
-            }
+            postIds.add(post.getId());
+            categories.add(post.getCategory());
+        }
+
+        Map<Long, List<String>> tagNamesByPostIds = postTagService.findTagNamesByPostIds(postIds);
+        Map<Long, Integer> postCountByCategoryIds = postRepositoryFacade.countPostsByCategory(categories);
+
+        for (Post post : posts) {
+            List<String> tagNames = tagNamesByPostIds.getOrDefault(post.getId(), new ArrayList<>());
 
             postResponses.add(new PostResponse(
                 post.getId(),
@@ -160,8 +167,8 @@ public class PostService {
                     .categoryId(post.getCategory().getId())
                     .categoryName(post.getCategory().getCategoryName())
                     .categoryColor(post.getCategory().getCategoryColor())
-                    .categoryDescription(post.getCategory().getCategoryColor())
-                    .postCount(postRepositoryFacade.countPostByCategory(post.getCategory()))
+                    .categoryDescription(post.getCategory().getCategoryDescription())
+                    .postCount(postCountByCategoryIds.getOrDefault(post.getCategory().getId(), 0))
                     .build(),
                 tagNames
             ));
