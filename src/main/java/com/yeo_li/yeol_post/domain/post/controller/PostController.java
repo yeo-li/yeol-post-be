@@ -29,6 +29,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -99,11 +100,13 @@ public class PostController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<PostResponse>>> getPostsByQueryString(
         @Parameter(description = "검색 파라미터(title, tag, category, author, limit, is_published)", example = "title=Spring Security")
-        @RequestParam(required = false) Map<String, String> params) {
+        @RequestParam(required = false) Map<String, String> params,
+        Authentication authentication) {
         // TODO: sibal refactoring
         List<PostResponse> postResponses = new ArrayList<>();
+        boolean isAdmin = isAdmin(authentication);
         if (params.isEmpty()) {
-            postResponses = postService.getAllPosts(); // 완료 모든 게시물 반환
+            postResponses = isAdmin ? postService.getAllPosts() : postService.getAllPublishedPosts();
         } else if (params.containsKey("title")) { // 사용자 -> 완료 출간된 게시물만 반환
             postResponses = postService.getPostByTitle(params.get("title"));
         } else if (params.containsKey("tag")) { // 사용자 -> 완료 -> 출간된 게시물만 반환
@@ -115,9 +118,9 @@ public class PostController {
         } else if (params.containsKey("limit") && params.containsKey(
             "is_published")) { // 사용자(권한별)
             postResponses = postService.getPostRecent(Integer.parseInt(params.get("limit")),
-                Boolean.parseBoolean(params.get("is_published")));
+                isAdmin ? Boolean.parseBoolean(params.get("is_published")) : true);
         } else if (params.containsKey("is_published")) { // 권한 사용자
-            if (Boolean.parseBoolean(params.get("is_published"))) {
+            if (!isAdmin || Boolean.parseBoolean(params.get("is_published"))) {
                 postResponses = postService.getAllPublishedPosts();
             } else {
                 postResponses = postService.getAllDraftPosts();
@@ -130,6 +133,11 @@ public class PostController {
             .status(HttpStatus.OK)
             .body(ApiResponse.onSuccess(postResponses));
 
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     @Operation(summary = "게시물 삭제", description = "게시물 ID로 게시물을 삭제합니다.")
