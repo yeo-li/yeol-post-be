@@ -90,6 +90,8 @@ public class SecurityConfig {
                     PathPatternRequestMatcher.withDefaults()
                         .matcher(HttpMethod.POST, "/api/v1/visitors/access"),
                     PathPatternRequestMatcher.withDefaults()
+                        .matcher(HttpMethod.POST, "/api/v1/posts/*/comments"),
+                    PathPatternRequestMatcher.withDefaults()
                         .matcher(HttpMethod.POST, "/api/v1/posts/*/views")
                 )
             )
@@ -112,7 +114,8 @@ public class SecurityConfig {
                     "/api/v1/subscriptions/**",
                     "/api/v1/users/me",
                     "/api/v1/likes/**",
-                    "/api/v1/feeds"
+                    "/api/v1/feeds",
+                    "/api/v1/comments/anonymous-nickname"
                 ).permitAll()
 
                 // public write endpoint
@@ -122,6 +125,7 @@ public class SecurityConfig {
                     "/api/v1/subscriptions",
                     "/api/v1/subscriptions/",
                     "/api/v1/visitors/access",
+                    "/api/v1/posts/*/comments",
                     "/api/v1/posts/*/views"
                 ).permitAll()
 

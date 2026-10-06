@@ -2,9 +2,11 @@ package com.yeo_li.yeol_post.domain.comment.controller;
 
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentCreateRequest;
 import com.yeo_li.yeol_post.domain.comment.dto.request.CommentUpdateRequest;
+import com.yeo_li.yeol_post.domain.comment.dto.response.AnonymousNicknameResponse;
 import com.yeo_li.yeol_post.domain.comment.dto.response.CommentReplyResponse;
 import com.yeo_li.yeol_post.domain.comment.service.CommentService;
 import com.yeo_li.yeol_post.global.common.response.ApiResponse;
+import com.yeo_li.yeol_post.global.common.swagger.AnonymousNicknameResponseApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.CommentReplyResponseApiResponse;
 import com.yeo_li.yeol_post.global.common.swagger.VoidApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +37,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController {
 
     private final CommentService commentService;
+
+    @Operation(summary = "익명 댓글 닉네임 생성", description = "비로그인 댓글 작성 시 사용할 랜덤 닉네임 후보를 생성합니다.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "생성 성공",
+            content = @Content(schema = @Schema(implementation = AnonymousNicknameResponseApiResponse.class))
+        )
+    })
+    @GetMapping("/anonymous-nickname")
+    public ResponseEntity<ApiResponse<AnonymousNicknameResponse>> generateAnonymousNickname() {
+        return ResponseEntity.ok(ApiResponse.onSuccess(
+            new AnonymousNicknameResponse(commentService.generateAnonymousNickname())
+        ));
+    }
 
     // 게시물의 댓글을 삭제할 때
     @Operation(summary = "댓글 삭제", description = "댓글 ID로 댓글을 삭제합니다.")

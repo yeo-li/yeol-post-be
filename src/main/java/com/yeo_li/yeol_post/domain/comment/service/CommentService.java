@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -37,6 +38,18 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CommentService {
 
+    private static final List<String> ANONYMOUS_ADJECTIVES = List.of(
+        "포근한", "말랑한", "졸린", "반짝이는", "장난꾸러기", "귀여운", "행복한", "신나는",
+        "용감한", "느긋한", "통통한", "보송한", "폭신한", "사랑스러운", "다정한", "씩씩한",
+        "재빠른", "호기심많은", "수줍은", "깜찍한", "발랄한", "평화로운", "따뜻한", "자유로운",
+        "기분좋은", "맑은", "동그란", "느린", "작은", "뽀짝한"
+    );
+    private static final List<String> ANONYMOUS_ANIMALS = List.of(
+        "토끼", "수달", "고양이", "다람쥐", "판다", "강아지", "햄스터", "여우", "곰", "코알라",
+        "펭귄", "오리", "병아리", "고슴도치", "라쿤", "사슴", "돌고래", "고래", "부엉이", "앵무새",
+        "카피바라", "알파카", "기니피그", "해달", "너구리", "쿼카", "치타", "코끼리", "기린", "삵"
+    );
+
     private final CommentRepository commentRepository;
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
@@ -48,12 +61,7 @@ public class CommentService {
     public CommentResponse saveComment(OAuth2User principal, Long postId,
         CommentCreateRequest request) {
         Long userId = getUserId(principal);
-        if (userId == null) {
-            throw new GeneralException(CommentExceptionType.COMMENT_USER_ID_INVALID);
-        }
-
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+        User user = getUser(userId);
 
         Post post = postRepository.findPostById(postId);
         if (post == null) {
@@ -62,12 +70,14 @@ public class CommentService {
 
         String sanitizedContent = sanitizeCommentContent(request.content());
 
-        Comment savedComment = commentRepository.save(
-            new Comment(sanitizedContent, post, user, null)
-        );
+        Comment comment = new Comment(sanitizedContent, post, user, null);
+        if (user == null) {
+            comment.setAnonymousNickname(resolveAnonymousNickname(request.anonymousNickname()));
+        }
+        Comment savedComment = commentRepository.save(comment);
 
-        publisher.publishEvent(new CommentCreatedEvent(savedComment.getId(), savedComment.getUser().getId(),
-            savedComment.getUser().getNickname(), savedComment.getContent(), post.getId(),
+        publisher.publishEvent(new CommentCreatedEvent(savedComment.getId(), userId,
+            getCommentNickname(savedComment), savedComment.getContent(), post.getId(),
             post.getUser().getId(), post.getUser().getEmail(), post.getTitle(), LocalDateTime.now()));
 
         log.info(StructuredLog.event(
@@ -77,7 +87,7 @@ public class CommentService {
             )
             .field("commentId", savedComment.getId())
             .field("postId", post.getId())
-            .field("userId", user.getId())
+            .field("userId", userId)
             .field("postOwnerUserId", post.getUser().getId())
             .build());
 
@@ -94,7 +104,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
             .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
 
-        if (!Objects.equals(comment.getUser().getId(), userId)) {
+        if (!isCommentOwner(comment, userId)) {
             throw new GeneralException(CommentExceptionType.COMMENT_FORBIDDEN);
         }
 
@@ -121,7 +131,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdAndDeletedAtIsNull(commentId)
             .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_NOT_FOUND));
 
-        if (!Objects.equals(comment.getUser().getId(), userId)) {
+        if (!isCommentOwner(comment, userId)) {
             throw new GeneralException(CommentExceptionType.COMMENT_FORBIDDEN);
         }
 
@@ -158,11 +168,13 @@ public class CommentService {
             new Comment(sanitizedContent, parentComment.getPost(), user, parentComment)
         );
 
-        publisher.publishEvent(
-            new ReplyCreatedEvent(reply.getId(), reply.getUser().getId(), reply.getUser().getNickname(),
-                reply.getContent(), parentComment.getId(), parentComment.getUser().getId(),
-                parentComment.getUser().getEmail(), parentComment.getPost().getId(), parentComment.getPost().getTitle(),
-                LocalDateTime.now()));
+        if (parentComment.getUser() != null) {
+            publisher.publishEvent(
+                new ReplyCreatedEvent(reply.getId(), reply.getUser().getId(), reply.getUser().getNickname(),
+                    reply.getContent(), parentComment.getId(), parentComment.getUser().getId(),
+                    parentComment.getUser().getEmail(), parentComment.getPost().getId(), parentComment.getPost().getTitle(),
+                    LocalDateTime.now()));
+        }
 
         log.info(StructuredLog.event(
                 "COMMENT_REPLY_CREATED",
@@ -173,7 +185,8 @@ public class CommentService {
             .field("parentCommentId", parentComment.getId())
             .field("postId", parentComment.getPost().getId())
             .field("userId", user.getId())
-            .field("parentCommentOwnerUserId", parentComment.getUser().getId())
+            .field("parentCommentOwnerUserId", parentComment.getUser() == null ? null
+                : parentComment.getUser().getId())
             .build());
 
         return convertCommentReplyResponse(userId, reply);
@@ -197,17 +210,19 @@ public class CommentService {
         }
 
         commentLikeRepository.save(new CommentLike(user, comment));
-        publisher.publishEvent(new CommentLikedEvent(
-            comment.getId(),
-            comment.getContent(),
-            comment.getUser().getId(),
-            comment.getUser().getEmail(),
-            comment.getPost().getId(),
-            comment.getPost().getTitle(),
-            user.getId(),
-            user.getNickname(),
-            LocalDateTime.now()
-        ));
+        if (comment.getUser() != null) {
+            publisher.publishEvent(new CommentLikedEvent(
+                comment.getId(),
+                comment.getContent(),
+                comment.getUser().getId(),
+                comment.getUser().getEmail(),
+                comment.getPost().getId(),
+                comment.getPost().getTitle(),
+                user.getId(),
+                user.getNickname(),
+                LocalDateTime.now()
+            ));
+        }
 
         log.info(StructuredLog.event(
                 "COMMENT_LIKED",
@@ -217,7 +232,7 @@ public class CommentService {
             .field("commentId", comment.getId())
             .field("postId", comment.getPost().getId())
             .field("userId", user.getId())
-            .field("commentOwnerUserId", comment.getUser().getId())
+            .field("commentOwnerUserId", comment.getUser() == null ? null : comment.getUser().getId())
             .build());
     }
 
@@ -292,12 +307,12 @@ public class CommentService {
 
         return new CommentResponse(
             comment.getId(),
-            comment.getDeletedAt() == null ? comment.getUser().getNickname() : "(알수없음)",
+            comment.getDeletedAt() == null ? getCommentNickname(comment) : "(알수없음)",
             comment.getDeletedAt() == null ? comment.getContent() : "삭제된 댓글입니다.",
             comment.getCreatedAt(),
             likeCount,
             comment.getDeletedAt() == null ? isLiked : false,
-            Objects.equals(comment.getUser().getId(), userId),
+            isCommentOwner(comment, userId),
             comment.getDeletedAt() != null,
             new ArrayList<>()
         );
@@ -342,6 +357,44 @@ public class CommentService {
         }
 
         return null;
+    }
+
+    private User getUser(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new GeneralException(CommentExceptionType.COMMENT_USER_NOT_FOUND));
+    }
+
+    private boolean isCommentOwner(Comment comment, Long userId) {
+        return userId != null && comment.getUser() != null
+            && Objects.equals(comment.getUser().getId(), userId);
+    }
+
+    private String getCommentNickname(Comment comment) {
+        return comment.getUser() == null ? comment.getAnonymousNickname()
+            : comment.getUser().getNickname();
+    }
+
+    public String generateAnonymousNickname() {
+        return ANONYMOUS_ADJECTIVES.get(ThreadLocalRandom.current().nextInt(ANONYMOUS_ADJECTIVES.size()))
+            + ANONYMOUS_ANIMALS.get(ThreadLocalRandom.current().nextInt(ANONYMOUS_ANIMALS.size()));
+    }
+
+    private String resolveAnonymousNickname(String anonymousNickname) {
+        if (anonymousNickname == null || anonymousNickname.isBlank()) {
+            return generateAnonymousNickname();
+        }
+
+        boolean isAllowed = ANONYMOUS_ADJECTIVES.stream()
+            .anyMatch(adjective -> ANONYMOUS_ANIMALS.stream()
+                .anyMatch(animal -> (adjective + animal).equals(anonymousNickname)));
+        if (!isAllowed) {
+            throw new GeneralException(CommentExceptionType.COMMENT_ANONYMOUS_NICKNAME_INVALID);
+        }
+        return anonymousNickname;
     }
 
     private String sanitizeCommentContent(String content) {
