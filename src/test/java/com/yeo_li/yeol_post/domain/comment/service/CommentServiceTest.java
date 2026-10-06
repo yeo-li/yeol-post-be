@@ -103,17 +103,28 @@ class CommentServiceTest {
         }
 
         @Test
-        void saveComment_principal에_userId가_없으면_인증실패_예외를_발생시킨다() {
+        void saveComment_비로그인사용자면_익명댓글을_저장하고_응답을_반환한다() {
             // given
-            CommentCreateRequest request = new CommentCreateRequest("댓글 본문");
-            when(principal.getAttributes()).thenReturn(Map.of("id", "kakao-id-only"));
+            Post post = createPost(10L);
+            CommentCreateRequest request = new CommentCreateRequest("댓글 본문", "포근한토끼");
+            when(postRepository.findPostById(10L)).thenReturn(post);
+            when(commentRepository.save(any(Comment.class))).thenAnswer(invocation -> {
+                Comment comment = invocation.getArgument(0);
+                comment.setId(101L);
+                return comment;
+            });
 
-            // when & then
-            assertThatThrownBy(() -> commentService.saveComment(principal, 10L, request))
-                .isInstanceOf(GeneralException.class)
-                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
-                    .isEqualTo(CommentExceptionType.COMMENT_USER_ID_INVALID));
-            verify(commentRepository, never()).save(any(Comment.class));
+            // when
+            CommentResponse response = commentService.saveComment(null, 10L, request);
+
+            // then
+            ArgumentCaptor<Comment> commentCaptor = ArgumentCaptor.forClass(Comment.class);
+            verify(commentRepository).save(commentCaptor.capture());
+            Comment savedComment = commentCaptor.getValue();
+            assertThat(savedComment.getUser()).isNull();
+            assertThat(savedComment.getAnonymousNickname()).isEqualTo("포근한토끼");
+            assertThat(response.userNickname()).isEqualTo(savedComment.getAnonymousNickname());
+            assertThat(response.isOwner()).isFalse();
         }
 
         @Test
@@ -209,6 +220,19 @@ class CommentServiceTest {
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
         }
+
+        @Test
+        void 발생시킨다_deleteComment_익명댓글이면_권한없음_예외를() {
+            Comment comment = createComment(102L, "익명 댓글", null);
+            comment.setAnonymousNickname("포근한토끼");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(102L)).thenReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.deleteComment(principal, 102L))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
+        }
     }
 
     @Nested
@@ -271,6 +295,20 @@ class CommentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> commentService.updateComment(principal, 201L, request))
+                .isInstanceOf(GeneralException.class)
+                .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
+                    .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
+        }
+
+        @Test
+        void 발생시킨다_updateComment_익명댓글이면_권한없음_예외를() {
+            Comment comment = createComment(202L, "익명 댓글", null);
+            comment.setAnonymousNickname("포근한토끼");
+            CommentUpdateRequest request = new CommentUpdateRequest("수정된 댓글");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findByIdAndDeletedAtIsNull(202L)).thenReturn(Optional.of(comment));
+
+            assertThatThrownBy(() -> commentService.updateComment(principal, 202L, request))
                 .isInstanceOf(GeneralException.class)
                 .satisfies(ex -> assertThat(((GeneralException) ex).getErrorCode())
                     .isEqualTo(CommentExceptionType.COMMENT_FORBIDDEN));
@@ -484,6 +522,26 @@ class CommentServiceTest {
 
     @Nested
     class GetCommentsTest {
+
+        @Test
+        void 반환한다_getComments_익명댓글은랜덤닉네임과소유자아님을반환한다() {
+            // given
+            Comment comment = createComment(500L, "익명 댓글", null);
+            comment.setAnonymousNickname("포근한토끼");
+            when(principal.getAttributes()).thenReturn(Map.of("userId", 1L));
+            when(commentRepository.findCommentsByPostIdAndParentCommentIsNull(10L))
+                .thenReturn(List.of(comment));
+            when(commentRepository.findCommentsByParentCommentAndDeletedAtIsNull(comment))
+                .thenReturn(List.of());
+
+            // when
+            var result = commentService.getComments(principal, 10L);
+
+            // then
+            var response = result.comments().get(0);
+            assertThat(response.userNickname()).isEqualTo("포근한토끼");
+            assertThat(response.isOwner()).isFalse();
+        }
 
         @Test
         void 반환한다_getComments_댓글과답글의_좋아요수와좋아요여부를_반환한다() {

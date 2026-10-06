@@ -252,7 +252,8 @@ public class PostController {
             mediaType = "application/json",
             examples = @ExampleObject(value = """
                 {
-                  "content": "좋은 글 감사합니다!"
+                  "content": "좋은 글 감사합니다!",
+                  "anonymousNickname": "포근한토끼"
                 }
                 """)
         )

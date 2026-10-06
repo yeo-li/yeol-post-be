@@ -35,3 +35,5 @@ databaseChangeLog:
       file: db/changelog/v1_0/017-increase-feed-content-length.yaml
   - include:
       file: db/changelog/v1_0/018-create-feed-like-table.yaml
+  - include:
+      file: db/changelog/v1_0/019-support-anonymous-comments.yaml

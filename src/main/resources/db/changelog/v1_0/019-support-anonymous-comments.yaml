@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-make-comment-user-nullable
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists:
+              tableName: comment
+          - columnExists:
+              tableName: comment
+              columnName: user_id
+      changes:
+        - dropNotNullConstraint:
+            tableName: comment
+            columnName: user_id
+            columnDataType: BIGINT
+
+  - changeSet:
+      id: 019-add-comment-anonymous-nickname
+      author: codex
+      preConditions:
+        onFail: MARK_RAN
+        onError: HALT
+        and:
+          - tableExists:
+              tableName: comment
+          - not:
+              - columnExists:
+                  tableName: comment
+                  columnName: anonymous_nickname
+      changes:
+        - addColumn:
+            tableName: comment
+            columns:
+              - column:
+                  name: anonymous_nickname
+                  type: VARCHAR(10)
